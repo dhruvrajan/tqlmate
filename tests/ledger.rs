@@ -135,6 +135,22 @@ fn plan_stamps_legacy_bootstrap_then_applies_newer() {
 }
 
 #[test]
+fn plan_applies_non_init_even_when_first_pending() {
+    // Types exist but only a post-init ledger migration is pending → must Apply, not Stamp.
+    let shipped = vec![mf(
+        "00000000000002",
+        "ledger_extra",
+        "define attribute _tqlmate_note, value string;",
+        "undefine _tqlmate_note;",
+    )];
+    let plan = plan_ledger_ensure(&shipped, Some(&[]));
+    assert_eq!(
+        plan,
+        vec![LedgerEnsureAction::Apply(Version::new("00000000000002"))]
+    );
+}
+
+#[test]
 fn plan_ordering_applies_pending_in_shipped_order() {
     let shipped = vec![
         mf("00000000000001", "a", "define entity a;", "undefine a;"),

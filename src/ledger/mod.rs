@@ -6,6 +6,9 @@
 //! sort before user `YYYYMMDDHHMMSS` timestamps and never appear as pending user
 //! migrations.
 //!
+//! **Never remove or renumber shipped ledger migration files.** Old databases
+//! record those versions; renaming breaks upgrades.
+//!
 //! Ledger upgrades are **forward-only** in the CLI (downs are still required and
 //! non-empty). Rolling back ledger types would need instance deletes before
 //! `undefine` (TypeDB instances block type undefine).
@@ -26,6 +29,9 @@ pub const ATTR_APPLIED_AT: &str = "_tqlmate_applied_at";
 /// 14-digit versions with eight leading zeros are reserved for shipped ledger migrations.
 pub const LEDGER_VERSION_LEN: usize = 14;
 pub const LEDGER_VERSION_PREFIX: &str = "00000000";
+
+/// Version of the initial ledger schema migration (legacy stamp target only).
+pub const LEDGER_INIT_VERSION: &str = "00000000000001";
 
 /// `(filename, file body)` baked into the binary. Add a new row when shipping a ledger migration.
 const EMBEDDED_LEDGER_MIGRATIONS: &[(&str, &str)] = &[(
@@ -91,9 +97,14 @@ fn parse_embedded(filename: &str, text: &str) -> Result<MigrationFile> {
 
 /// Decide which ledger migrations to apply or stamp.
 ///
-/// `applied = None` means the ledger types are missing (fresh database).
-/// `applied = Some(_)` means types exist; the first shipped migration is stamped
-/// if it is pending (legacy one-shot bootstrap upgrade path).
+/// `applied = None` means the ledger types are missing (fresh database): every
+/// pending migration is [`LedgerEnsureAction::Apply`].
+///
+/// `applied = Some(_)` means types exist. Only a pending migration whose version
+/// is exactly [`LEDGER_INIT_VERSION`] (`00000000000001`) is
+/// [`LedgerEnsureAction::Stamp`]ed (legacy one-shot bootstrap that already
+/// defined those types). Every other pending ledger migration must
+/// [`LedgerEnsureAction::Apply`] (run up). Never remove or renumber shipped files.
 pub fn plan_ledger_ensure(
     shipped: &[MigrationFile],
     applied: Option<&[Version]>,
@@ -106,11 +117,11 @@ pub fn plan_ledger_ensure(
     };
     let applied_set: HashSet<&Version> = applied.iter().collect();
     let mut actions = Vec::new();
-    for (i, m) in shipped.iter().enumerate() {
+    for m in shipped {
         if applied_set.contains(&m.version) {
             continue;
         }
-        if i == 0 {
+        if m.version.as_str() == LEDGER_INIT_VERSION {
             actions.push(LedgerEnsureAction::Stamp(m.version.clone()));
         } else {
             actions.push(LedgerEnsureAction::Apply(m.version.clone()));

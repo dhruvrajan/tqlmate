@@ -86,13 +86,14 @@ Each up/down runs in one **SCHEMA** transaction together with the ledger write (
 - `dump` uses `Database::schema()` (TypeQL `define` text) and prepends applied versions as comments.
 - `load` strips those header comments and runs the remainder as one schema query. Prefer `migrate` for incremental changes; `load` is for bootstrapping from a dump.
 - **Ledger schema** (`_tqlmate_*` types) is versioned and shipped inside the binary as `src/ledger/migrations/*.tql`. On `ensure` / before user `migrate`, pending ledger migrations apply in order and are recorded with reserved versions `00000000000001`–`00000000999999` (14 digits, eight leading zeros) so they never collide with user `YYYYMMDDHHMMSS` files under `db/migrations`. Ledger upgrades are forward-only in the CLI; each shipped file still needs a real non-empty `-- migrate:down`. To evolve the ledger in a release: add the next zero-padded file under `src/ledger/migrations/`, register it in `EMBEDDED_LEDGER_MIGRATIONS` in `src/ledger/mod.rs`, and ship. **Never remove or renumber** shipped ledger files.
-- **Unit** (under `tests/`, next to the Docker suite): `url.rs`, `migration.rs`, `ledger.rs`, `cli.rs`. Offline:
-  `cargo test --no-default-features --test url --test migration --test ledger --test cli`
-  These must not open TypeDB or Docker.
-- **Formal verification** ([`verification/`](verification/)): Aeneas extracts the pure algorithm in
-  [`src/pure.rs`](src/pure.rs); Lean 4 (`verification/lean`, toolchain **v4.31.0**) proves status
-  disjointness, strict-order, parse/split/slugify/dump properties. `lake build` is CI-only — release
-  binaries do not need Lean/Charon/Aeneas. See [`verification/README.md`](verification/README.md).
+- **Unit** (under `tests/`, next to the Docker suite): `url.rs`, `migration.rs`, `ledger.rs`, `cli.rs`, `spec_parity.rs`. Offline:
+  `cargo test --no-default-features --test url --test migration --test ledger --test cli --test spec_parity`
+  These must not open TypeDB or Docker. `spec_parity` locks Lean ExtrProperties fixtures to `src/pure.rs` outputs.
+- **Formal verification** ([`verification/`](verification/)): Charon+Aeneas extract
+  [`src/pure.rs`](src/pure.rs) → `verification/lean/aeneas-generated/`. CI `lake build`
+  depends on the Aeneas Lean package and elaborates that extract, proving key properties
+  on the **extracted** functions (`ExtrProperties`, Lean **v4.31.0**).
+  Release binaries do not need Lean/Charon/Aeneas. See [`verification/README.md`](verification/README.md).
 - **Integration** (`tests/typedb_docker.rs` only, feature `typedb-docker`, on by default): TypeDB via [testcontainers](https://testcontainers.com/) (`typedb/typedb:3.12.3`). Requires Docker; fails loudly if unavailable (no silent skip).
 - CI (`.github/workflows/ci.yml`, GitHub-hosted runners): jobs `unit` → `integration`, plus parallel `lint`, `verify` (Lean), and `package` (`cargo publish --dry-run`).
 - Release: pushing a `v*` tag runs `.github/workflows/release.yml` — unit tests, then cross-platform binaries, then a GitHub Release with those archives attached and a `cargo publish` to crates.io (`CARGO_REGISTRY_TOKEN` secret). Releases are cut from GitHub only, never from a laptop.

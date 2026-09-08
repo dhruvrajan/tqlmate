@@ -1,6 +1,10 @@
 /-
-  Spec: Lean model of `src/pure.rs` (tqlmate migration/ledger algorithm).
-  Faithful formalization of the pure algorithm Charon/Aeneas extracts from Rust.
+  Spec: Lean **model** of `src/pure.rs` (tqlmate migration/ledger algorithm).
+
+  This is what `lake build` / CI typechecks and proves (`Properties.lean`).
+  It is intentionally separate from `aeneas-generated/Funs.lean` (Charon→Aeneas
+  translation artefact). Linking Spec to extracted Funs (and thus to Rust) is
+  future refinement work — see `verification/README.md`.
 -/
 
 namespace TqlmateExtract.Spec

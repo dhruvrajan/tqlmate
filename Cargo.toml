@@ -18,7 +18,7 @@ path = "src/main.rs"
 [features]
 default = ["typedb-docker"]
 # Compiles `tests/typedb_docker.rs` (TypeDB via testcontainers). Offline unit
-# targets: `cargo test --no-default-features --test url --test migration --test ledger --test cli`.
+# targets: `cargo test --no-default-features --test url --test migration --test ledger --test cli --test spec_parity`.
 typedb-docker = []
 
 [dependencies]

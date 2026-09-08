@@ -56,6 +56,20 @@ jobs:
       - name: Verify the crate packages cleanly
         run: cargo publish --dry-run --locked
 
+  verify:
+    name: verify (lean)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install elan / Lean toolchain
+        run: |
+          curl https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -sSf |
+            sh -s -- -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+      - name: lake build (migration/ledger Spec + Properties)
+        working-directory: verification/lean
+        run: lake build
+
   rust-build:
     needs: unit
     strategy:

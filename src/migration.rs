@@ -1,22 +1,10 @@
-use std::collections::HashSet;
 use std::fs;
 use std::path::{Path, PathBuf};
 
+use crate::pure::{self, MigrationId, ParseError, StrictOrderError};
 use crate::{Error, Result};
 
-/// Digit-only migration version (lexicographic order matches chronological timestamps).
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct Version(String);
-
-impl Version {
-    pub fn new(s: impl Into<String>) -> Self {
-        Self(s.into())
-    }
-
-    pub fn as_str(&self) -> &str {
-        &self.0
-    }
-}
+pub use pure::{MigrationStatus, Version};
 
 impl std::fmt::Display for Version {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -55,34 +43,27 @@ impl MigrationFile {
     pub fn label(&self) -> String {
         format!("{}_{}", self.version, self.name)
     }
+
+    fn id(&self) -> MigrationId {
+        MigrationId {
+            version: self.version.clone(),
+            name: self.name.clone(),
+        }
+    }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum MigrationStatus {
-    Applied,
-    Pending,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum Section {
-    Up,
-    Down,
+fn map_parse(err: ParseError, filename: &str) -> Error {
+    match err {
+        ParseError::Extension => Error::MigrationExtension(filename.to_string()),
+        ParseError::Filename => Error::MigrationFilename(filename.to_string()),
+        ParseError::VersionDigits => Error::MigrationVersionDigits(filename.to_string()),
+        ParseError::Name => Error::MigrationName(filename.to_string()),
+        ParseError::Markers => Error::MigrationMarkers,
+    }
 }
 
 pub fn parse_version_name(filename: &str) -> Result<(Version, String)> {
-    let stem = filename
-        .strip_suffix(".tql")
-        .ok_or_else(|| Error::MigrationExtension(filename.to_string()))?;
-    let (version, rest) = stem
-        .split_once('_')
-        .ok_or_else(|| Error::MigrationFilename(filename.to_string()))?;
-    if version.is_empty() || !version.chars().all(|c| c.is_ascii_digit()) {
-        return Err(Error::MigrationVersionDigits(filename.to_string()));
-    }
-    if rest.is_empty() {
-        return Err(Error::MigrationName(filename.to_string()));
-    }
-    Ok((Version::new(version), rest.to_string()))
+    pure::parse_version_name(filename).map_err(|e| map_parse(e, filename))
 }
 
 pub fn parse_migration(path: &Path) -> Result<MigrationFile> {
@@ -108,43 +89,7 @@ pub fn parse_migration_body(text: &str) -> Result<(String, String)> {
 }
 
 fn split_up_down(text: &str) -> Result<(String, String)> {
-    let mut section = None::<Section>;
-    let mut up = String::new();
-    let mut down = String::new();
-
-    for line in text.lines() {
-        if let Some(marker) = migration_marker(line) {
-            section = Some(marker);
-            continue;
-        }
-        match section {
-            Some(Section::Up) => {
-                up.push_str(line);
-                up.push('\n');
-            }
-            Some(Section::Down) => {
-                down.push_str(line);
-                down.push('\n');
-            }
-            None => {}
-        }
-    }
-
-    if section.is_none() && up.is_empty() && down.is_empty() {
-        return Err(Error::MigrationMarkers);
-    }
-    Ok((up.trim().to_string(), down.trim().to_string()))
-}
-
-fn migration_marker(line: &str) -> Option<Section> {
-    let marker = line.trim().strip_prefix("--")?.trim();
-    if marker.eq_ignore_ascii_case("migrate:up") {
-        Some(Section::Up)
-    } else if marker.eq_ignore_ascii_case("migrate:down") {
-        Some(Section::Down)
-    } else {
-        None
-    }
+    pure::split_up_down(text).map_err(|e| map_parse(e, ""))
 }
 
 pub fn list_migration_files(dir: &Path) -> Result<Vec<MigrationFile>> {
@@ -173,34 +118,27 @@ pub fn status_rows(
     files: &[MigrationFile],
     applied: &[Version],
 ) -> Vec<(MigrationFile, MigrationStatus)> {
-    let applied: HashSet<&Version> = applied.iter().collect();
+    let ids: Vec<MigrationId> = files.iter().map(|f| f.id()).collect();
+    let statuses = pure::status_rows(&ids, applied);
     files
         .iter()
         .cloned()
-        .map(|f| {
-            let status = if applied.contains(&f.version) {
-                MigrationStatus::Applied
-            } else {
-                MigrationStatus::Pending
-            };
-            (f, status)
-        })
+        .zip(statuses.into_iter().map(|(_, s)| s))
         .collect()
 }
 
 pub fn check_strict_order(files: &[MigrationFile], applied: &[Version]) -> Result<()> {
-    let Some(max) = applied.iter().max() else {
-        return Ok(());
-    };
-    for f in files {
-        if !applied.iter().any(|v| v == &f.version) && f.version.as_str() < max.as_str() {
-            return Err(Error::StrictOrder {
-                pending: f.version.clone(),
-                applied_up_to: max.clone(),
-            });
-        }
+    let ids: Vec<MigrationId> = files.iter().map(|f| f.id()).collect();
+    match pure::check_strict_order(&ids, applied) {
+        Ok(()) => Ok(()),
+        Err(StrictOrderError::OutOfOrder {
+            pending,
+            applied_up_to,
+        }) => Err(Error::StrictOrder {
+            pending,
+            applied_up_to,
+        }),
     }
-    Ok(())
 }
 
 pub fn new_migration_path(dir: &Path, name: &str) -> PathBuf {
@@ -214,18 +152,5 @@ pub fn migration_template() -> &'static str {
 }
 
 pub fn slugify(name: &str) -> String {
-    let mut out = String::new();
-    for c in name.chars() {
-        if c.is_ascii_alphanumeric() {
-            out.push(c.to_ascii_lowercase());
-        } else if !out.ends_with('_') {
-            out.push('_');
-        }
-    }
-    let trimmed = out.trim_matches('_').to_string();
-    if trimmed.is_empty() {
-        "migration".into()
-    } else {
-        trimmed
-    }
+    pure::slugify(name)
 }

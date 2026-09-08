@@ -227,29 +227,18 @@ pub fn record_delete(version: &Version) -> String {
 
 /// Header comments written by `dump`, listing applied migration labels.
 pub fn dump_header(applied: &[Version], files: &[MigrationFile]) -> String {
-    let mut out = String::from("-- Schema dumped by tqlmate\n-- Applied migrations:\n");
-    if applied.is_empty() {
-        out.push_str("--   (none)\n");
-    } else {
-        for v in applied {
-            match files.iter().find(|f| &f.version == v) {
-                Some(m) => out.push_str(&format!("--   {}\n", m.label())),
-                None => out.push_str(&format!("--   {v}\n")),
-            }
-        }
-    }
-    out.push('\n');
-    out
+    let ids: Vec<_> = files
+        .iter()
+        .map(|f| crate::pure::MigrationId {
+            version: f.version.clone(),
+            name: f.name.clone(),
+        })
+        .collect();
+    crate::pure::dump_header(applied, &ids)
 }
 
 pub fn strip_dump_header(text: &str) -> String {
-    text.lines()
-        .skip_while(|l| {
-            let t = l.trim();
-            t.is_empty() || t.starts_with("--")
-        })
-        .collect::<Vec<_>>()
-        .join("\n")
+    crate::pure::strip_dump_header(text)
 }
 
 pub async fn schema_queries(driver: &TypeDBDriver, database: &str, queries: &[&str]) -> Result<()> {

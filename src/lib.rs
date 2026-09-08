@@ -3,6 +3,8 @@
 pub mod cli;
 mod ledger;
 mod migration;
+/// Pure migration/ledger algorithm (Charon/Aeneas extractable; no I/O).
+pub mod pure;
 mod runner;
 mod url;
 

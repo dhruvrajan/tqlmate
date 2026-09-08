@@ -5,3 +5,6 @@
 /db/
 *.typedb
 Cargo.lock.bak
+verification/lean/.lake/
+verification/extract/target/
+verification/extract/*.llbc

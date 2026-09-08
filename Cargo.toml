@@ -9,7 +9,7 @@ repository = "https://github.com/dhruvrajan/tqlmate"
 homepage = "https://github.com/dhruvrajan/tqlmate"
 keywords = ["typedb", "migration", "typeql", "database", "cli"]
 categories = ["command-line-utilities", "database"]
-exclude = [".github/", ".env.example"]
+exclude = [".github/", ".env.example", "verification/"]
 
 [[bin]]
 name = "tqlmate"

@@ -1,0 +1,11 @@
+name = "tqlmate_verify"
+version = "0.1.0"
+defaultTargets = ["TqlmateExtract"]
+
+# Spec/Properties are self-contained Lean 4 (no Mathlib / Aeneas package required
+# for `lake build`). Aeneas-generated files live in `aeneas-generated/` and are
+# reproduced via `verification/scripts/extract-aeneas.sh` (see README).
+
+[[lean_lib]]
+name = "TqlmateExtract"
+globs = ["TqlmateExtract", "TqlmateExtract.Spec", "TqlmateExtract.Properties"]

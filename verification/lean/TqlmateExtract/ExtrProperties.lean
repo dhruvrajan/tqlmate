@@ -7,7 +7,7 @@ import TqlmateExtract.Funs
 These theorems target `tqlmate_extract.pure.*` in `aeneas-generated/Funs.lean`.
 CI `lake build` elaborates Funs and checks this file.
 
-Concrete examples stay aligned with `tests/spec_parity.rs` / Spec `Properties`.
+Concrete examples stay aligned with `tests/spec_parity.rs` (Rust ↔ ExtrProperties).
 -/
 
 open Aeneas Aeneas.Std Result

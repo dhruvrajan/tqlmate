@@ -18,7 +18,5 @@ globs = [
   "TqlmateExtract.Types",
   "TqlmateExtract.FunsExternal",
   "TqlmateExtract.Funs",
-  "TqlmateExtract.Spec",
-  "TqlmateExtract.Properties",
   "TqlmateExtract.ExtrProperties",
 ]

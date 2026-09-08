@@ -1,7 +1,7 @@
-//! Parity fixtures shared with `verification/lean/TqlmateExtract/Properties.lean`.
+//! Parity between Rust `pure` helpers and ExtrProperties Lean fixtures.
 //!
-//! Each case below is the Rust image of a `native_decide` example in that file.
-//! If you change a Lean example, update the matching row here (and vice versa).
+//! Each case below matches a `native_decide` / `Result.reducesTo` example in
+//! `verification/lean/TqlmateExtract/ExtrProperties.lean`. Keep them in sync.
 
 use tqlmate::pure::{
     check_strict_order, dump_header, parse_version_name, slugify, split_up_down, strip_dump_header,
@@ -15,7 +15,7 @@ fn mid(version: &str, name: &str) -> MigrationId {
     }
 }
 
-/// `parse_ok_example` / `parse_rejects_*` in Properties.lean
+/// `parse_ok_example` / `parse_rejects_*` in ExtrProperties.lean
 #[test]
 fn lean_parse_examples() {
     assert_eq!(

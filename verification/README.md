@@ -1,79 +1,49 @@
-# Formal verification (Aeneas + Lean 4)
+# Formal verification (Lean 4 / Aeneas)
 
-Scope: the **pure** migration/ledger algorithm in [`src/pure.rs`](../src/pure.rs)
-(version parsing, up/down split, status / strict-order, slugify, dump header).
-No TypeDB driver, async, or filesystem I/O.
+Machine-checked properties of the **extracted** pure core (`src/pure.rs`) used by
+`src/migration.rs` and `src/ledger/`. Story:
 
-## End-to-end claim (what CI checks)
+**Rust → Charon → Aeneas → ExtrProperties**
 
-```
-src/pure.rs  →  Charon  →  Aeneas  →  lean/aeneas-generated/{Types,Funs}.lean
-                                              ↓
-                                    lake build (imports Aeneas + Funs)
-                                              ↓
-                         ExtrProperties theorems about extracted `pure.*`
-```
+## What is proved
 
-| Layer | Artefact | CI / `lake build` |
-|-------|----------|-------------------|
-| **Extraction** | Charon + Aeneas → [`lean/aeneas-generated/`](lean/aeneas-generated/) | **Elaborated.** `TqlmateExtract` imports `Types` + `Funs` + filled `FunsExternal`. Deleting/breaking `Funs.lean` fails the build. Marked `linguist-generated`. |
-| **Externals** | [`TqlmateExtract/FunsExternal.lean`](lean/TqlmateExtract/FunsExternal.lean) | Hand-filled models for std holes Aeneas left open (`str`/`String`/ranges). Not regenerated. |
-| **Extracted proofs** | [`ExtrProperties.lean`](lean/TqlmateExtract/ExtrProperties.lean) | **Machine-checked properties of extracted `tqlmate_extract.pure.*`.** |
-| **Spec (readable twin)** | [`Spec.lean`](lean/TqlmateExtract/Spec.lean) + [`Properties.lean`](lean/TqlmateExtract/Properties.lean) | Still built. Same concrete fixtures as ExtrProperties / Rust parity; Spec is the readable model, ExtrProperties closes the Spec↔extract gap for those fixtures. |
+[`lean/TqlmateExtract/ExtrProperties.lean`](lean/TqlmateExtract/ExtrProperties.lean)
+states the same fixtures as `tests/spec_parity.rs` against Aeneas-generated
+[`lean/aeneas-generated/Funs.lean`](lean/aeneas-generated/Funs.lean) (`Result.reducesTo` +
+`native_decide`):
 
-Release / `cargo build --release` never depends on Lean, Charon, or Aeneas.
+- version/name parse ok and reject cases
+- migrate up/down marker split (including case-insensitive)
+- strict-order hole detection and ok prefixes
+- pending ∩ applied disjointness on a small set
+- slugify examples
 
-## Parity with Rust
+`tests/spec_parity.rs` mirrors those fixtures (plus dump header / strip round-trip on the Rust pure helpers).
 
-[`tests/spec_parity.rs`](../tests/spec_parity.rs) locks the same concrete vectors used in Spec
-`Properties` and ExtrProperties (`parse_*`, `split_*`, `strict_order_*`, `slugify_*`, …)
-to `src/pure.rs` outputs.
+Hand-filled externals live in
+[`lean/TqlmateExtract/FunsExternal.lean`](lean/TqlmateExtract/FunsExternal.lean)
+(Aeneas’s generated `FunsExternal*.lean` copies are discarded after extract).
 
-```bash
-cargo test --no-default-features --test spec_parity
-```
+`Types.lean` / `Funs.lean` under `lean/TqlmateExtract/` are symlinks into
+`aeneas-generated/`.
 
-## Toolchain
+## Pins
 
-| Component | Version |
-|-----------|---------|
-| Lean 4 | `leanprover/lean4:v4.31.0` ([`lean/lean-toolchain`](lean/lean-toolchain)) |
-| Aeneas | `33e3b2b4a5b7fa734fe8bb1282ebad066b38d049` (Lake `require` + extract pin) |
-| Charon | `f0785b40f11dabae831fad31f819a473f19e4dfb` |
+See [`VERSIONS`](VERSIONS). Lake requires Aeneas at the pinned commit
+(`backends/lean`); that pulls Mathlib. CI runs `lake update` then `lake exe cache get`.
 
-See [`VERSIONS`](VERSIONS). Lake pulls Aeneas’s Lean package from GitHub (`backends/lean`, brings Mathlib).
+## Regenerating the extract
 
-## Extracted theorems (`ExtrProperties`)
-
-Proved about **Aeneas `Funs`** (via `Result.reducesTo` / `native_decide`):
-
-| Theorem | Meaning |
-|---------|---------|
-| `parse_rejects_*_example` / `parse_ok_example` | Filename parse reject/ok on extracted `parse_version_name` |
-| `split_rejects_*` / `split_ok_*` | Marker split on extracted `split_up_down` |
-| `strict_order_detects_hole` / `strict_order_ok_prefix` / `check_strict_order_empty_applied` | Extracted `check_strict_order` |
-| `pending_applied_disjoint_example` | Extracted `pending_applied_disjoint` |
-| `slugify_examples` | Extracted `slugify` |
-
-Spec `Properties` keeps the same fixture table plus a general Spec-level
-`pending_applied_disjoint` proof.
-
-## Reproduce
-
-```bash
-# elan: https://lean-lang.org/lean4/doc/setup.html
-cd verification/lean
-lake update
-lake exe cache get   # Mathlib oleans
-lake build
-```
-
-### Re-extract
+Requires Charon + Aeneas on `PATH` (see `VERSIONS`). From the repo root:
 
 ```bash
 ./verification/scripts/extract-aeneas.sh
 ```
 
-Post-extract, the script patches `PartialOrd.*.default` calls to pass `.partial_cmp`
-(Aeneas Lean models expect the field, not the whole trait value) and refreshes
-symlinks `TqlmateExtract/{Types,Funs}.lean` → `aeneas-generated/`.
+Then:
+
+```bash
+cd verification/lean && lake update && lake exe cache get && lake build
+```
+
+Re-check examples in `ExtrProperties.lean` if the extract shape changes.

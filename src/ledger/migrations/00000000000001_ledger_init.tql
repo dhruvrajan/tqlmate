@@ -1,0 +1,16 @@
+-- tqlmate ledger schema v1 (reserved version; not a user migration)
+-- migrate:up
+define
+  attribute _tqlmate_version, value string;
+  attribute _tqlmate_applied_at, value datetime;
+  entity _tqlmate_schema_migration,
+    owns _tqlmate_version @card(1),
+    owns _tqlmate_applied_at @card(1);
+
+-- migrate:down
+undefine
+  owns _tqlmate_version from _tqlmate_schema_migration;
+  owns _tqlmate_applied_at from _tqlmate_schema_migration;
+  _tqlmate_schema_migration;
+  _tqlmate_version;
+  _tqlmate_applied_at;

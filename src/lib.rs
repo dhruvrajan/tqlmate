@@ -7,8 +7,10 @@ mod runner;
 mod url;
 
 pub use ledger::{
-    bootstrap_schema, dump_header, record_delete, record_insert, strip_dump_header,
-    ATTR_APPLIED_AT, ATTR_VERSION, ENTITY,
+    bootstrap_schema, dump_header, is_ledger_version, plan_ledger_ensure, record_delete,
+    record_insert, shipped_ledger_migrations, strip_dump_header, LedgerEnsureAction,
+    ATTR_APPLIED_AT, ATTR_VERSION, ENTITY, LEDGER_INIT_VERSION, LEDGER_VERSION_LEN,
+    LEDGER_VERSION_PREFIX,
 };
 pub use migration::{
     check_strict_order, list_migration_files, migration_template, new_migration_path,

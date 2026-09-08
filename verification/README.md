@@ -10,7 +10,7 @@ Be precise — these are three related artefacts, not one claim:
 
 | Layer | Artefact | What CI / `lake build` does |
 |-------|----------|------------------------------|
-| **(a) Extraction** | Charon + Aeneas translate `src/pure.rs` → [`lean/aeneas-generated/`](lean/aeneas-generated/) (`Types.lean`, `Funs.lean`, …) | **Not** typechecked in CI. Kept as a regeneration artefact (`scripts/extract-aeneas.sh`). Uncovered `str`/`fmt` helpers sit as axioms in `FunsExternal.lean`. |
+| **(a) Extraction** | Charon + Aeneas translate `src/pure.rs` → [`lean/aeneas-generated/`](lean/aeneas-generated/) (`Types.lean`, `Funs.lean`, `FunsExternal_Template.lean`, …) | **Not** typechecked in CI. Kept as a regeneration artefact (`scripts/extract-aeneas.sh`). Paths under `aeneas-generated/` are marked `linguist-generated` in `.gitattributes` — **do not hand-edit**; regenerate instead. Uncovered `str`/`fmt` helpers sit as axioms in `FunsExternal.lean`. |
 | **(b) Spec proofs** | Readable Lean model [`TqlmateExtract.Spec`](lean/TqlmateExtract/Spec.lean) + theorems in [`Properties.lean`](lean/TqlmateExtract/Properties.lean) | **`lake build` checks these.** This is the machine-checked property layer. |
 | **(c) Refinement** | Spec ↔ Aeneas `Funs` ↔ Rust | **Future work.** Not claimed. |
 

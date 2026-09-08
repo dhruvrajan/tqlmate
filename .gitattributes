@@ -1,0 +1,3 @@
+# Aeneas translation output — do not hand-edit; regenerate via
+# verification/scripts/extract-aeneas.sh (see verification/README.md).
+verification/lean/aeneas-generated/** linguist-generated=true

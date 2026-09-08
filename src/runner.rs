@@ -5,9 +5,10 @@ use typedb_driver::{Addresses, Credentials, DriverOptions, DriverTlsConfig, Type
 
 use crate::ledger::{self, dump_header, schema_queries, strip_dump_header};
 use crate::migration::{
-    self, check_strict_order, list_migration_files, new_migration_path, status_rows,
-    MigrationStatus, Version,
+    self, list_migration_files, new_migration_path, status_rows, MigrationFile, MigrationStatus,
+    Version,
 };
+use crate::pure::{self, Op, Plan, PlanError, State};
 use crate::url::TypeDbUrl;
 use crate::{Error, Result};
 
@@ -104,24 +105,14 @@ impl Runner {
         ledger::ensure(driver, &db).await?;
         let files = list_migration_files(&dir)?;
         let applied = ledger::applied_versions(driver, &db).await?;
-        if strict {
-            check_strict_order(&files, &applied)?;
-        }
-        let pending: Vec<_> = files
-            .into_iter()
-            .filter(|f| !applied.iter().any(|v| v == &f.version))
-            .collect();
-        if pending.is_empty() {
+        let plan = plan_migrate_files(&files, &applied, strict)?;
+        if plan.is_empty() {
             if verbose {
                 eprintln!("Migrations: nothing to apply");
             }
             return Ok(());
         }
-        for m in pending {
-            apply_up(driver, &db, &m.version, &m.up, verbose).await?;
-            println!("Applied: {}", m.label());
-        }
-        Ok(())
+        execute_plan(driver, &db, &files, &plan, verbose).await
     }
 
     pub async fn rollback(&mut self) -> Result<()> {
@@ -132,26 +123,15 @@ impl Runner {
         let driver = self.connect().await?;
         ledger::ensure(driver, &db).await?;
         let files = list_migration_files(&dir)?;
-        let mut applied = ledger::applied_versions(driver, &db).await?;
-        let Some(version) = applied.pop() else {
+        let applied = ledger::applied_versions(driver, &db).await?;
+        let plan = plan_rollback_files(&files, &applied)?;
+        if plan.is_empty() {
             if verbose {
                 eprintln!("Rollback: nothing to roll back");
             }
             return Ok(());
-        };
-        let m = files
-            .iter()
-            .find(|f| f.version == version)
-            .ok_or_else(|| Error::MissingMigrationFile(version.clone()))?;
-        if m.down.is_empty() {
-            return Err(Error::EmptyDown {
-                version: m.version.clone(),
-                name: m.name.clone(),
-            });
         }
-        apply_down(driver, &db, &m.version, &m.down, verbose).await?;
-        println!("Rolled back: {}", m.label());
-        Ok(())
+        execute_plan(driver, &db, &files, &plan, verbose).await
     }
 
     pub async fn status(&mut self, quiet: bool) -> Result<bool> {
@@ -169,7 +149,7 @@ impl Runner {
         };
         let files = list_migration_files(&dir)?;
         if strict {
-            check_strict_order(&files, &applied)?;
+            migration::check_strict_order(&files, &applied)?;
         }
         let rows = status_rows(&files, &applied);
         let pending = rows.iter().any(|(_, s)| *s == MigrationStatus::Pending);
@@ -285,7 +265,9 @@ async fn apply_up(
     up: &str,
     verbose: bool,
 ) -> Result<()> {
-    if up.trim().is_empty() {
+    // Effect axiom (trusted): on success, abstract State gains `version`.
+    // Empty-up rejection is decided in [`pure::plan_migrate`]; keep a guard here.
+    if pure::body_is_empty(up) {
         return Err(Error::EmptyUp(version.clone()));
     }
     let applied_at = chrono::Utc::now().format("%Y-%m-%dT%H:%M:%S").to_string();
@@ -303,11 +285,107 @@ async fn apply_down(
     down: &str,
     verbose: bool,
 ) -> Result<()> {
+    // Effect axiom (trusted): on success, abstract State drops last matching `version`.
+    if pure::body_is_empty(down) {
+        return Err(Error::EmptyDown {
+            version: version.clone(),
+            name: String::new(),
+        });
+    }
     let delete = ledger::record_delete(version);
     if verbose {
         eprintln!("-> down {version}");
     }
     schema_queries(driver, database, &[down, delete.as_str()]).await
+}
+
+fn map_plan_error(err: PlanError) -> Error {
+    match err {
+        PlanError::EmptyUp(v) => Error::EmptyUp(v),
+        PlanError::EmptyDown { version, name } => Error::EmptyDown { version, name },
+        PlanError::MissingFile(v) => Error::MissingMigrationFile(v),
+        PlanError::StrictOrder {
+            pending,
+            applied_up_to,
+        } => Error::StrictOrder {
+            pending,
+            applied_up_to,
+        },
+    }
+}
+
+fn files_to_specs(files: &[MigrationFile]) -> Vec<pure::MigrationSpec> {
+    files
+        .iter()
+        .map(|f| pure::MigrationSpec {
+            version: f.version.clone(),
+            name: f.name.clone(),
+            up: f.up.clone(),
+            down: f.down.clone(),
+        })
+        .collect()
+}
+
+/// Pure planning for migrate (decisions only; TypeDB effects happen in [`execute_plan`]).
+pub fn plan_migrate_files(
+    files: &[MigrationFile],
+    applied: &[Version],
+    strict: bool,
+) -> Result<Plan> {
+    let specs = files_to_specs(files);
+    pure::plan_migrate(&specs, applied, strict).map_err(map_plan_error)
+}
+
+/// Pure planning for rollback.
+pub fn plan_rollback_files(files: &[MigrationFile], applied: &[Version]) -> Result<Plan> {
+    let specs = files_to_specs(files);
+    pure::plan_rollback(&specs, applied).map_err(map_plan_error)
+}
+
+/// Execute a plan against TypeDB. **Trusted effect layer:** success ⇒ abstract
+/// [`State`] transition; failure ⇒ ledger unchanged (schema tx abort).
+async fn execute_plan(
+    driver: &TypeDBDriver,
+    database: &str,
+    files: &[MigrationFile],
+    plan: &[Op],
+    verbose: bool,
+) -> Result<()> {
+    for op in plan {
+        match op {
+            Op::ApplyUp { version, up } => {
+                apply_up(driver, database, version, up, verbose).await?;
+                let label = files
+                    .iter()
+                    .find(|f| &f.version == version)
+                    .map(|f| f.label())
+                    .unwrap_or_else(|| version.as_str().to_string());
+                println!("Applied: {label}");
+            }
+            Op::ApplyDown { version, down } => {
+                apply_down(driver, database, version, down, verbose).await?;
+                let label = files
+                    .iter()
+                    .find(|f| &f.version == version)
+                    .map(|f| f.label())
+                    .unwrap_or_else(|| version.as_str().to_string());
+                println!("Rolled back: {label}");
+            }
+        }
+    }
+    Ok(())
+}
+
+/// Abstract post-state after a successful plan (for tests / mental model).
+pub fn abstract_run(applied: &[Version], plan: &[Op]) -> Result<State> {
+    let state = State::new(applied.to_vec());
+    pure::run(&state, plan).map_err(|e| match e {
+        pure::StepError::EmptyUp(v) => Error::EmptyUp(v),
+        pure::StepError::EmptyDown(v) => Error::EmptyDown {
+            version: v,
+            name: String::new(),
+        },
+    })
 }
 
 /// Resolve a connection URL from CLI / env sources (pure; no process env reads).

@@ -17,8 +17,6 @@ set_option maxHeartbeats 1000000
 /- You can set the `maxRecDepth` value with the `-max-recdepth` CLI option -/
 set_option maxRecDepth 2048
 
-/- You can remove the following line by using the CLI option `-all-computable`: -/
-
 namespace tqlmate_extract
 
 /-- Trait implementation: [core::fmt::{impl core::fmt::Display for str}]
@@ -107,6 +105,16 @@ def core.ops.range.RangeFromUsize.Insts.CoreSliceIndexSliceIndexStrStr :
     core.ops.range.RangeFromUsize.Insts.CoreSliceIndexSliceIndexStrStr.index_mut
 }
 
+/-- Trait implementation: [alloc::string::{impl core::cmp::PartialEq<alloc::string::String> for alloc::string::String}]
+    Source: '/rustc/library/alloc/src/string.rs', lines 350:9-350:18
+    Name pattern: [core::cmp::PartialEq<alloc::string::String, alloc::string::String>] -/
+@[reducible, rust_trait_impl
+  "core::cmp::PartialEq<alloc::string::String, alloc::string::String>"]
+def alloc.string.String.Insts.CoreCmpPartialEqString : core.cmp.PartialEq
+  String String := {
+  eq := alloc.string.String.Insts.CoreCmpPartialEqString.eq
+}
+
 /-- Trait implementation: [alloc::string::{impl core::fmt::Debug for alloc::string::String}]
     Source: '/rustc/library/alloc/src/string.rs', lines 2754:0-2754:26
     Name pattern: [core::fmt::Debug<alloc::string::String>] -/
@@ -126,7 +134,7 @@ def alloc.string.String.Insts.CoreConvertFromShared0Str : core.convert.From
 }
 
 /-- [tqlmate_extract::pure::{impl core::fmt::Debug for tqlmate_extract::pure::Version}::fmt]:
-    Source: 'src/../../../src/pure.rs', lines 10:9-10:14
+    Source: 'src/../../../src/pure.rs', lines 13:9-13:14
     Visibility: public -/
 def pure.Version.Insts.CoreFmtDebug.fmt
   (self : pure.Version) (f : core.fmt.Formatter) :
@@ -137,14 +145,14 @@ def pure.Version.Insts.CoreFmtDebug.fmt
   core.fmt.Formatter.debug_tuple_field1_finish f (toStr "Version") dyn
 
 /-- Trait implementation: [tqlmate_extract::pure::{impl core::fmt::Debug for tqlmate_extract::pure::Version}]
-    Source: 'src/../../../src/pure.rs', lines 10:9-10:14 -/
+    Source: 'src/../../../src/pure.rs', lines 13:9-13:14 -/
 @[reducible]
 def pure.Version.Insts.CoreFmtDebug : core.fmt.Debug pure.Version := {
   fmt := pure.Version.Insts.CoreFmtDebug.fmt
 }
 
 /-- [tqlmate_extract::pure::{impl core::clone::Clone for tqlmate_extract::pure::Version}::clone]:
-    Source: 'src/../../../src/pure.rs', lines 10:16-10:21
+    Source: 'src/../../../src/pure.rs', lines 13:16-13:21
     Visibility: public -/
 def pure.Version.Insts.CoreCloneClone.clone
   (self : pure.Version) : Result pure.Version := do
@@ -152,28 +160,28 @@ def pure.Version.Insts.CoreCloneClone.clone
   ok s
 
 /-- Trait implementation: [tqlmate_extract::pure::{impl core::clone::Clone for tqlmate_extract::pure::Version}]
-    Source: 'src/../../../src/pure.rs', lines 10:16-10:21 -/
+    Source: 'src/../../../src/pure.rs', lines 13:16-13:21 -/
 @[reducible]
 def pure.Version.Insts.CoreCloneClone : core.clone.Clone pure.Version := {
   clone := pure.Version.Insts.CoreCloneClone.clone
 }
 
 /-- Trait implementation: [tqlmate_extract::pure::{impl core::marker::StructuralPartialEq for tqlmate_extract::pure::Version}]
-    Source: 'src/../../../src/pure.rs', lines 10:23-10:32 -/
+    Source: 'src/../../../src/pure.rs', lines 13:23-13:32 -/
 @[reducible]
 def pure.Version.Insts.CoreMarkerStructuralPartialEq :
   core.marker.StructuralPartialEq pure.Version := {
 }
 
 /-- [tqlmate_extract::pure::{impl core::cmp::PartialEq<tqlmate_extract::pure::Version> for tqlmate_extract::pure::Version}::eq]:
-    Source: 'src/../../../src/pure.rs', lines 10:23-10:32
+    Source: 'src/../../../src/pure.rs', lines 13:23-13:32
     Visibility: public -/
 def pure.Version.Insts.CoreCmpPartialEqVersion.eq
   (self : pure.Version) (other : pure.Version) : Result Bool := do
   alloc.string.String.Insts.CoreCmpPartialEqString.eq self other
 
 /-- Trait implementation: [tqlmate_extract::pure::{impl core::cmp::PartialEq<tqlmate_extract::pure::Version> for tqlmate_extract::pure::Version}]
-    Source: 'src/../../../src/pure.rs', lines 10:23-10:32 -/
+    Source: 'src/../../../src/pure.rs', lines 13:23-13:32 -/
 @[reducible]
 def pure.Version.Insts.CoreCmpPartialEqVersion : core.cmp.PartialEq
   pure.Version pure.Version := {
@@ -181,14 +189,14 @@ def pure.Version.Insts.CoreCmpPartialEqVersion : core.cmp.PartialEq
 }
 
 /-- [tqlmate_extract::pure::{impl core::cmp::Eq for tqlmate_extract::pure::Version}::assert_fields_are_eq]:
-    Source: 'src/../../../src/pure.rs', lines 10:34-10:36
+    Source: 'src/../../../src/pure.rs', lines 13:34-13:36
     Visibility: public -/
 def pure.Version.Insts.CoreCmpEq.assert_fields_are_eq
   (self : pure.Version) : Result Unit := do
   ok ()
 
 /-- Trait implementation: [tqlmate_extract::pure::{impl core::cmp::Eq for tqlmate_extract::pure::Version}]
-    Source: 'src/../../../src/pure.rs', lines 10:34-10:36 -/
+    Source: 'src/../../../src/pure.rs', lines 13:34-13:36 -/
 @[reducible]
 def pure.Version.Insts.CoreCmpEq : core.cmp.Eq pure.Version := {
   partialEqInst := pure.Version.Insts.CoreCmpPartialEqVersion
@@ -196,14 +204,14 @@ def pure.Version.Insts.CoreCmpEq : core.cmp.Eq pure.Version := {
 }
 
 /-- [tqlmate_extract::pure::{impl core::cmp::Ord for tqlmate_extract::pure::Version}::cmp]:
-    Source: 'src/../../../src/pure.rs', lines 10:50-10:53
+    Source: 'src/../../../src/pure.rs', lines 13:50-13:53
     Visibility: public -/
 def pure.Version.Insts.CoreCmpOrd.cmp
   (self : pure.Version) (other : pure.Version) : Result Ordering := do
   alloc.string.String.Insts.CoreCmpOrd.cmp self other
 
 /-- [tqlmate_extract::pure::{impl core::cmp::PartialOrd<tqlmate_extract::pure::Version> for tqlmate_extract::pure::Version}::partial_cmp]:
-    Source: 'src/../../../src/pure.rs', lines 10:38-10:48
+    Source: 'src/../../../src/pure.rs', lines 13:38-13:48
     Visibility: public -/
 def pure.Version.Insts.CoreCmpPartialOrdVersion.partial_cmp
   (self : pure.Version) (other : pure.Version) : Result (Option Ordering) := do
@@ -211,7 +219,7 @@ def pure.Version.Insts.CoreCmpPartialOrdVersion.partial_cmp
   ok (some o)
 
 /-- Trait implementation: [tqlmate_extract::pure::{impl core::cmp::PartialOrd<tqlmate_extract::pure::Version> for tqlmate_extract::pure::Version}]
-    Source: 'src/../../../src/pure.rs', lines 10:38-10:48 -/
+    Source: 'src/../../../src/pure.rs', lines 13:38-13:48 -/
 @[reducible]
 impl_def pure.Version.Insts.CoreCmpPartialOrdVersion : core.cmp.PartialOrd
   pure.Version pure.Version := {
@@ -222,7 +230,7 @@ impl_def pure.Version.Insts.CoreCmpPartialOrdVersion : core.cmp.PartialOrd
 }
 
 /-- Trait implementation: [tqlmate_extract::pure::{impl core::cmp::Ord for tqlmate_extract::pure::Version}]
-    Source: 'src/../../../src/pure.rs', lines 10:50-10:53 -/
+    Source: 'src/../../../src/pure.rs', lines 13:50-13:53 -/
 @[reducible]
 def pure.Version.Insts.CoreCmpOrd : core.cmp.Ord pure.Version := {
   eqInst := pure.Version.Insts.CoreCmpEq
@@ -230,8 +238,26 @@ def pure.Version.Insts.CoreCmpOrd : core.cmp.Ord pure.Version := {
   cmp := pure.Version.Insts.CoreCmpOrd.cmp
 }
 
+/-- [tqlmate_extract::pure::{impl core::hash::Hash for tqlmate_extract::pure::Version}::hash]:
+    Source: 'src/../../../src/pure.rs', lines 13:55-13:59
+    Visibility: public -/
+def pure.Version.Insts.CoreHashHash.hash
+  {__H : Type} (corehashHasherInst : core.hash.Hasher __H)
+  (self : pure.Version) (state : __H) :
+  Result __H
+  := do
+  alloc.string.String.Insts.CoreHashHash.hash corehashHasherInst self state
+
+/-- Trait implementation: [tqlmate_extract::pure::{impl core::hash::Hash for tqlmate_extract::pure::Version}]
+    Source: 'src/../../../src/pure.rs', lines 13:55-13:59 -/
+@[reducible]
+def pure.Version.Insts.CoreHashHash : core.hash.Hash pure.Version := {
+  hash := fun {H : Type} (corehashHasherInst : core.hash.Hasher H) =>
+    pure.Version.Insts.CoreHashHash.hash corehashHasherInst
+}
+
 /-- [tqlmate_extract::pure::{tqlmate_extract::pure::Version}::new]:
-    Source: 'src/../../../src/pure.rs', lines 14:4-16:5
+    Source: 'src/../../../src/pure.rs', lines 17:4-19:5
     Visibility: public -/
 def pure.Version.new
   {T0 : Type} (coreconvertIntoT0StringInst : core.convert.Into T0 String)
@@ -242,13 +268,13 @@ def pure.Version.new
   ok s1
 
 /-- [tqlmate_extract::pure::{tqlmate_extract::pure::Version}::as_str]:
-    Source: 'src/../../../src/pure.rs', lines 18:4-20:5
+    Source: 'src/../../../src/pure.rs', lines 21:4-23:5
     Visibility: public -/
 def pure.Version.as_str (self : pure.Version) : Result Str := do
   alloc.string.String.Insts.CoreOpsDerefDerefStr.deref self
 
 /-- [tqlmate_extract::pure::{impl core::fmt::Debug for tqlmate_extract::pure::MigrationId}::fmt]:
-    Source: 'src/../../../src/pure.rs', lines 24:9-24:14
+    Source: 'src/../../../src/pure.rs', lines 27:9-27:14
     Visibility: public -/
 def pure.MigrationId.Insts.CoreFmtDebug.fmt
   (self : pure.MigrationId) (f : core.fmt.Formatter) :
@@ -262,14 +288,14 @@ def pure.MigrationId.Insts.CoreFmtDebug.fmt
     "version") dyn (toStr "name") dyn1
 
 /-- Trait implementation: [tqlmate_extract::pure::{impl core::fmt::Debug for tqlmate_extract::pure::MigrationId}]
-    Source: 'src/../../../src/pure.rs', lines 24:9-24:14 -/
+    Source: 'src/../../../src/pure.rs', lines 27:9-27:14 -/
 @[reducible]
 def pure.MigrationId.Insts.CoreFmtDebug : core.fmt.Debug pure.MigrationId := {
   fmt := pure.MigrationId.Insts.CoreFmtDebug.fmt
 }
 
 /-- [tqlmate_extract::pure::{impl core::clone::Clone for tqlmate_extract::pure::MigrationId}::clone]:
-    Source: 'src/../../../src/pure.rs', lines 24:16-24:21
+    Source: 'src/../../../src/pure.rs', lines 27:16-27:21
     Visibility: public -/
 def pure.MigrationId.Insts.CoreCloneClone.clone
   (self : pure.MigrationId) : Result pure.MigrationId := do
@@ -278,7 +304,7 @@ def pure.MigrationId.Insts.CoreCloneClone.clone
   ok { version := v, «name» := s }
 
 /-- Trait implementation: [tqlmate_extract::pure::{impl core::clone::Clone for tqlmate_extract::pure::MigrationId}]
-    Source: 'src/../../../src/pure.rs', lines 24:16-24:21 -/
+    Source: 'src/../../../src/pure.rs', lines 27:16-27:21 -/
 @[reducible]
 def pure.MigrationId.Insts.CoreCloneClone : core.clone.Clone pure.MigrationId
   := {
@@ -286,14 +312,14 @@ def pure.MigrationId.Insts.CoreCloneClone : core.clone.Clone pure.MigrationId
 }
 
 /-- Trait implementation: [tqlmate_extract::pure::{impl core::marker::StructuralPartialEq for tqlmate_extract::pure::MigrationId}]
-    Source: 'src/../../../src/pure.rs', lines 24:23-24:32 -/
+    Source: 'src/../../../src/pure.rs', lines 27:23-27:32 -/
 @[reducible]
 def pure.MigrationId.Insts.CoreMarkerStructuralPartialEq :
   core.marker.StructuralPartialEq pure.MigrationId := {
 }
 
 /-- [tqlmate_extract::pure::{impl core::cmp::PartialEq<tqlmate_extract::pure::MigrationId> for tqlmate_extract::pure::MigrationId}::eq]:
-    Source: 'src/../../../src/pure.rs', lines 24:23-24:32
+    Source: 'src/../../../src/pure.rs', lines 27:23-27:32
     Visibility: public -/
 def pure.MigrationId.Insts.CoreCmpPartialEqMigrationId.eq
   (self : pure.MigrationId) (other : pure.MigrationId) : Result Bool := do
@@ -304,7 +330,7 @@ def pure.MigrationId.Insts.CoreCmpPartialEqMigrationId.eq
   else ok false
 
 /-- Trait implementation: [tqlmate_extract::pure::{impl core::cmp::PartialEq<tqlmate_extract::pure::MigrationId> for tqlmate_extract::pure::MigrationId}]
-    Source: 'src/../../../src/pure.rs', lines 24:23-24:32 -/
+    Source: 'src/../../../src/pure.rs', lines 27:23-27:32 -/
 @[reducible]
 def pure.MigrationId.Insts.CoreCmpPartialEqMigrationId : core.cmp.PartialEq
   pure.MigrationId pure.MigrationId := {
@@ -312,14 +338,14 @@ def pure.MigrationId.Insts.CoreCmpPartialEqMigrationId : core.cmp.PartialEq
 }
 
 /-- [tqlmate_extract::pure::{impl core::cmp::Eq for tqlmate_extract::pure::MigrationId}::assert_fields_are_eq]:
-    Source: 'src/../../../src/pure.rs', lines 24:34-24:36
+    Source: 'src/../../../src/pure.rs', lines 27:34-27:36
     Visibility: public -/
 def pure.MigrationId.Insts.CoreCmpEq.assert_fields_are_eq
   (self : pure.MigrationId) : Result Unit := do
   ok ()
 
 /-- Trait implementation: [tqlmate_extract::pure::{impl core::cmp::Eq for tqlmate_extract::pure::MigrationId}]
-    Source: 'src/../../../src/pure.rs', lines 24:34-24:36 -/
+    Source: 'src/../../../src/pure.rs', lines 27:34-27:36 -/
 @[reducible]
 def pure.MigrationId.Insts.CoreCmpEq : core.cmp.Eq pure.MigrationId := {
   partialEqInst := pure.MigrationId.Insts.CoreCmpPartialEqMigrationId
@@ -327,7 +353,7 @@ def pure.MigrationId.Insts.CoreCmpEq : core.cmp.Eq pure.MigrationId := {
 }
 
 /-- [tqlmate_extract::pure::{tqlmate_extract::pure::MigrationId}::label]:
-    Source: 'src/../../../src/pure.rs', lines 31:4-37:5
+    Source: 'src/../../../src/pure.rs', lines 34:4-40:5
     Visibility: public -/
 def pure.MigrationId.label (self : pure.MigrationId) : Result String := do
   let out ← alloc.string.String.new
@@ -339,7 +365,7 @@ def pure.MigrationId.label (self : pure.MigrationId) : Result String := do
   alloc.string.String.push_str out2 s2
 
 /-- [tqlmate_extract::pure::{impl core::fmt::Debug for tqlmate_extract::pure::MigrationStatus}::fmt]:
-    Source: 'src/../../../src/pure.rs', lines 40:9-40:14
+    Source: 'src/../../../src/pure.rs', lines 43:9-43:14
     Visibility: public -/
 def pure.MigrationStatus.Insts.CoreFmtDebug.fmt
   (self : pure.MigrationStatus) (f : core.fmt.Formatter) :
@@ -352,7 +378,7 @@ def pure.MigrationStatus.Insts.CoreFmtDebug.fmt
     core.fmt.Formatter.write_str f (toStr "Pending")
 
 /-- Trait implementation: [tqlmate_extract::pure::{impl core::fmt::Debug for tqlmate_extract::pure::MigrationStatus}]
-    Source: 'src/../../../src/pure.rs', lines 40:9-40:14 -/
+    Source: 'src/../../../src/pure.rs', lines 43:9-43:14 -/
 @[reducible]
 def pure.MigrationStatus.Insts.CoreFmtDebug : core.fmt.Debug
   pure.MigrationStatus := {
@@ -360,14 +386,14 @@ def pure.MigrationStatus.Insts.CoreFmtDebug : core.fmt.Debug
 }
 
 /-- [tqlmate_extract::pure::{impl core::clone::Clone for tqlmate_extract::pure::MigrationStatus}::clone]:
-    Source: 'src/../../../src/pure.rs', lines 40:16-40:21
+    Source: 'src/../../../src/pure.rs', lines 43:16-43:21
     Visibility: public -/
 def pure.MigrationStatus.Insts.CoreCloneClone.clone
   (self : pure.MigrationStatus) : Result pure.MigrationStatus := do
   ok self
 
 /-- Trait implementation: [tqlmate_extract::pure::{impl core::clone::Clone for tqlmate_extract::pure::MigrationStatus}]
-    Source: 'src/../../../src/pure.rs', lines 40:16-40:21 -/
+    Source: 'src/../../../src/pure.rs', lines 43:16-43:21 -/
 @[reducible]
 def pure.MigrationStatus.Insts.CoreCloneClone : core.clone.Clone
   pure.MigrationStatus := {
@@ -375,7 +401,7 @@ def pure.MigrationStatus.Insts.CoreCloneClone : core.clone.Clone
 }
 
 /-- Trait implementation: [tqlmate_extract::pure::{impl core::marker::Copy for tqlmate_extract::pure::MigrationStatus}]
-    Source: 'src/../../../src/pure.rs', lines 40:23-40:27 -/
+    Source: 'src/../../../src/pure.rs', lines 43:23-43:27 -/
 @[reducible]
 def pure.MigrationStatus.Insts.CoreMarkerCopy : core.marker.Copy
   pure.MigrationStatus := {
@@ -383,14 +409,14 @@ def pure.MigrationStatus.Insts.CoreMarkerCopy : core.marker.Copy
 }
 
 /-- Trait implementation: [tqlmate_extract::pure::{impl core::marker::StructuralPartialEq for tqlmate_extract::pure::MigrationStatus}]
-    Source: 'src/../../../src/pure.rs', lines 40:29-40:38 -/
+    Source: 'src/../../../src/pure.rs', lines 43:29-43:38 -/
 @[reducible]
 def pure.MigrationStatus.Insts.CoreMarkerStructuralPartialEq :
   core.marker.StructuralPartialEq pure.MigrationStatus := {
 }
 
 /-- [tqlmate_extract::pure::{impl core::cmp::PartialEq<tqlmate_extract::pure::MigrationStatus> for tqlmate_extract::pure::MigrationStatus}::eq]:
-    Source: 'src/../../../src/pure.rs', lines 40:29-40:38
+    Source: 'src/../../../src/pure.rs', lines 43:29-43:38
     Visibility: public -/
 def pure.MigrationStatus.Insts.CoreCmpPartialEqMigrationStatus.eq
   (self : pure.MigrationStatus) (other : pure.MigrationStatus) :
@@ -401,7 +427,7 @@ def pure.MigrationStatus.Insts.CoreCmpPartialEqMigrationStatus.eq
   ok (self1 = other1)
 
 /-- Trait implementation: [tqlmate_extract::pure::{impl core::cmp::PartialEq<tqlmate_extract::pure::MigrationStatus> for tqlmate_extract::pure::MigrationStatus}]
-    Source: 'src/../../../src/pure.rs', lines 40:29-40:38 -/
+    Source: 'src/../../../src/pure.rs', lines 43:29-43:38 -/
 @[reducible]
 def pure.MigrationStatus.Insts.CoreCmpPartialEqMigrationStatus :
   core.cmp.PartialEq pure.MigrationStatus pure.MigrationStatus := {
@@ -409,14 +435,14 @@ def pure.MigrationStatus.Insts.CoreCmpPartialEqMigrationStatus :
 }
 
 /-- [tqlmate_extract::pure::{impl core::cmp::Eq for tqlmate_extract::pure::MigrationStatus}::assert_fields_are_eq]:
-    Source: 'src/../../../src/pure.rs', lines 40:40-40:42
+    Source: 'src/../../../src/pure.rs', lines 43:40-43:42
     Visibility: public -/
 def pure.MigrationStatus.Insts.CoreCmpEq.assert_fields_are_eq
   (self : pure.MigrationStatus) : Result Unit := do
   ok ()
 
 /-- Trait implementation: [tqlmate_extract::pure::{impl core::cmp::Eq for tqlmate_extract::pure::MigrationStatus}]
-    Source: 'src/../../../src/pure.rs', lines 40:40-40:42 -/
+    Source: 'src/../../../src/pure.rs', lines 43:40-43:42 -/
 @[reducible]
 def pure.MigrationStatus.Insts.CoreCmpEq : core.cmp.Eq pure.MigrationStatus
   := {
@@ -426,7 +452,7 @@ def pure.MigrationStatus.Insts.CoreCmpEq : core.cmp.Eq pure.MigrationStatus
 }
 
 /-- [tqlmate_extract::pure::{impl core::fmt::Debug for tqlmate_extract::pure::ParseError}::fmt]:
-    Source: 'src/../../../src/pure.rs', lines 46:9-46:14
+    Source: 'src/../../../src/pure.rs', lines 49:9-49:14
     Visibility: public -/
 def pure.ParseError.Insts.CoreFmtDebug.fmt
   (self : pure.ParseError) (f : core.fmt.Formatter) :
@@ -443,21 +469,21 @@ def pure.ParseError.Insts.CoreFmtDebug.fmt
   | pure.ParseError.Markers => core.fmt.Formatter.write_str f (toStr "Markers")
 
 /-- Trait implementation: [tqlmate_extract::pure::{impl core::fmt::Debug for tqlmate_extract::pure::ParseError}]
-    Source: 'src/../../../src/pure.rs', lines 46:9-46:14 -/
+    Source: 'src/../../../src/pure.rs', lines 49:9-49:14 -/
 @[reducible]
 def pure.ParseError.Insts.CoreFmtDebug : core.fmt.Debug pure.ParseError := {
   fmt := pure.ParseError.Insts.CoreFmtDebug.fmt
 }
 
 /-- [tqlmate_extract::pure::{impl core::clone::Clone for tqlmate_extract::pure::ParseError}::clone]:
-    Source: 'src/../../../src/pure.rs', lines 46:16-46:21
+    Source: 'src/../../../src/pure.rs', lines 49:16-49:21
     Visibility: public -/
 def pure.ParseError.Insts.CoreCloneClone.clone
   (self : pure.ParseError) : Result pure.ParseError := do
   ok self
 
 /-- Trait implementation: [tqlmate_extract::pure::{impl core::clone::Clone for tqlmate_extract::pure::ParseError}]
-    Source: 'src/../../../src/pure.rs', lines 46:16-46:21 -/
+    Source: 'src/../../../src/pure.rs', lines 49:16-49:21 -/
 @[reducible]
 def pure.ParseError.Insts.CoreCloneClone : core.clone.Clone pure.ParseError
   := {
@@ -465,7 +491,7 @@ def pure.ParseError.Insts.CoreCloneClone : core.clone.Clone pure.ParseError
 }
 
 /-- Trait implementation: [tqlmate_extract::pure::{impl core::marker::Copy for tqlmate_extract::pure::ParseError}]
-    Source: 'src/../../../src/pure.rs', lines 46:23-46:27 -/
+    Source: 'src/../../../src/pure.rs', lines 49:23-49:27 -/
 @[reducible]
 def pure.ParseError.Insts.CoreMarkerCopy : core.marker.Copy pure.ParseError
   := {
@@ -473,14 +499,14 @@ def pure.ParseError.Insts.CoreMarkerCopy : core.marker.Copy pure.ParseError
 }
 
 /-- Trait implementation: [tqlmate_extract::pure::{impl core::marker::StructuralPartialEq for tqlmate_extract::pure::ParseError}]
-    Source: 'src/../../../src/pure.rs', lines 46:29-46:38 -/
+    Source: 'src/../../../src/pure.rs', lines 49:29-49:38 -/
 @[reducible]
 def pure.ParseError.Insts.CoreMarkerStructuralPartialEq :
   core.marker.StructuralPartialEq pure.ParseError := {
 }
 
 /-- [tqlmate_extract::pure::{impl core::cmp::PartialEq<tqlmate_extract::pure::ParseError> for tqlmate_extract::pure::ParseError}::eq]:
-    Source: 'src/../../../src/pure.rs', lines 46:29-46:38
+    Source: 'src/../../../src/pure.rs', lines 49:29-49:38
     Visibility: public -/
 def pure.ParseError.Insts.CoreCmpPartialEqParseError.eq
   (self : pure.ParseError) (other : pure.ParseError) : Result Bool := do
@@ -489,7 +515,7 @@ def pure.ParseError.Insts.CoreCmpPartialEqParseError.eq
   ok (self1 = other1)
 
 /-- Trait implementation: [tqlmate_extract::pure::{impl core::cmp::PartialEq<tqlmate_extract::pure::ParseError> for tqlmate_extract::pure::ParseError}]
-    Source: 'src/../../../src/pure.rs', lines 46:29-46:38 -/
+    Source: 'src/../../../src/pure.rs', lines 49:29-49:38 -/
 @[reducible]
 def pure.ParseError.Insts.CoreCmpPartialEqParseError : core.cmp.PartialEq
   pure.ParseError pure.ParseError := {
@@ -497,14 +523,14 @@ def pure.ParseError.Insts.CoreCmpPartialEqParseError : core.cmp.PartialEq
 }
 
 /-- [tqlmate_extract::pure::{impl core::cmp::Eq for tqlmate_extract::pure::ParseError}::assert_fields_are_eq]:
-    Source: 'src/../../../src/pure.rs', lines 46:40-46:42
+    Source: 'src/../../../src/pure.rs', lines 49:40-49:42
     Visibility: public -/
 def pure.ParseError.Insts.CoreCmpEq.assert_fields_are_eq
   (self : pure.ParseError) : Result Unit := do
   ok ()
 
 /-- Trait implementation: [tqlmate_extract::pure::{impl core::cmp::Eq for tqlmate_extract::pure::ParseError}]
-    Source: 'src/../../../src/pure.rs', lines 46:40-46:42 -/
+    Source: 'src/../../../src/pure.rs', lines 49:40-49:42 -/
 @[reducible]
 def pure.ParseError.Insts.CoreCmpEq : core.cmp.Eq pure.ParseError := {
   partialEqInst := pure.ParseError.Insts.CoreCmpPartialEqParseError
@@ -512,7 +538,7 @@ def pure.ParseError.Insts.CoreCmpEq : core.cmp.Eq pure.ParseError := {
 }
 
 /-- [tqlmate_extract::pure::{impl core::fmt::Debug for tqlmate_extract::pure::StrictOrderError}::fmt]:
-    Source: 'src/../../../src/pure.rs', lines 55:9-55:14
+    Source: 'src/../../../src/pure.rs', lines 58:9-58:14
     Visibility: public -/
 def pure.StrictOrderError.Insts.CoreFmtDebug.fmt
   (self : pure.StrictOrderError) (f : core.fmt.Formatter) :
@@ -526,7 +552,7 @@ def pure.StrictOrderError.Insts.CoreFmtDebug.fmt
     "pending") __self_01 (toStr "applied_up_to") __self_11
 
 /-- Trait implementation: [tqlmate_extract::pure::{impl core::fmt::Debug for tqlmate_extract::pure::StrictOrderError}]
-    Source: 'src/../../../src/pure.rs', lines 55:9-55:14 -/
+    Source: 'src/../../../src/pure.rs', lines 58:9-58:14 -/
 @[reducible]
 def pure.StrictOrderError.Insts.CoreFmtDebug : core.fmt.Debug
   pure.StrictOrderError := {
@@ -534,7 +560,7 @@ def pure.StrictOrderError.Insts.CoreFmtDebug : core.fmt.Debug
 }
 
 /-- [tqlmate_extract::pure::{impl core::clone::Clone for tqlmate_extract::pure::StrictOrderError}::clone]:
-    Source: 'src/../../../src/pure.rs', lines 55:16-55:21
+    Source: 'src/../../../src/pure.rs', lines 58:16-58:21
     Visibility: public -/
 def pure.StrictOrderError.Insts.CoreCloneClone.clone
   (self : pure.StrictOrderError) : Result pure.StrictOrderError := do
@@ -544,7 +570,7 @@ def pure.StrictOrderError.Insts.CoreCloneClone.clone
   ok (pure.StrictOrderError.OutOfOrder v v1)
 
 /-- Trait implementation: [tqlmate_extract::pure::{impl core::clone::Clone for tqlmate_extract::pure::StrictOrderError}]
-    Source: 'src/../../../src/pure.rs', lines 55:16-55:21 -/
+    Source: 'src/../../../src/pure.rs', lines 58:16-58:21 -/
 @[reducible]
 def pure.StrictOrderError.Insts.CoreCloneClone : core.clone.Clone
   pure.StrictOrderError := {
@@ -552,14 +578,14 @@ def pure.StrictOrderError.Insts.CoreCloneClone : core.clone.Clone
 }
 
 /-- Trait implementation: [tqlmate_extract::pure::{impl core::marker::StructuralPartialEq for tqlmate_extract::pure::StrictOrderError}]
-    Source: 'src/../../../src/pure.rs', lines 55:23-55:32 -/
+    Source: 'src/../../../src/pure.rs', lines 58:23-58:32 -/
 @[reducible]
 def pure.StrictOrderError.Insts.CoreMarkerStructuralPartialEq :
   core.marker.StructuralPartialEq pure.StrictOrderError := {
 }
 
 /-- [tqlmate_extract::pure::{impl core::cmp::PartialEq<tqlmate_extract::pure::StrictOrderError> for tqlmate_extract::pure::StrictOrderError}::eq]:
-    Source: 'src/../../../src/pure.rs', lines 55:23-55:32
+    Source: 'src/../../../src/pure.rs', lines 58:23-58:32
     Visibility: public -/
 def pure.StrictOrderError.Insts.CoreCmpPartialEqStrictOrderError.eq
   (self : pure.StrictOrderError) (other : pure.StrictOrderError) :
@@ -573,7 +599,7 @@ def pure.StrictOrderError.Insts.CoreCmpPartialEqStrictOrderError.eq
   else ok false
 
 /-- Trait implementation: [tqlmate_extract::pure::{impl core::cmp::PartialEq<tqlmate_extract::pure::StrictOrderError> for tqlmate_extract::pure::StrictOrderError}]
-    Source: 'src/../../../src/pure.rs', lines 55:23-55:32 -/
+    Source: 'src/../../../src/pure.rs', lines 58:23-58:32 -/
 @[reducible]
 def pure.StrictOrderError.Insts.CoreCmpPartialEqStrictOrderError :
   core.cmp.PartialEq pure.StrictOrderError pure.StrictOrderError := {
@@ -581,14 +607,14 @@ def pure.StrictOrderError.Insts.CoreCmpPartialEqStrictOrderError :
 }
 
 /-- [tqlmate_extract::pure::{impl core::cmp::Eq for tqlmate_extract::pure::StrictOrderError}::assert_fields_are_eq]:
-    Source: 'src/../../../src/pure.rs', lines 55:34-55:36
+    Source: 'src/../../../src/pure.rs', lines 58:34-58:36
     Visibility: public -/
 def pure.StrictOrderError.Insts.CoreCmpEq.assert_fields_are_eq
   (self : pure.StrictOrderError) : Result Unit := do
   ok ()
 
 /-- Trait implementation: [tqlmate_extract::pure::{impl core::cmp::Eq for tqlmate_extract::pure::StrictOrderError}]
-    Source: 'src/../../../src/pure.rs', lines 55:34-55:36 -/
+    Source: 'src/../../../src/pure.rs', lines 58:34-58:36 -/
 @[reducible]
 def pure.StrictOrderError.Insts.CoreCmpEq : core.cmp.Eq pure.StrictOrderError
   := {
@@ -598,7 +624,7 @@ def pure.StrictOrderError.Insts.CoreCmpEq : core.cmp.Eq pure.StrictOrderError
 }
 
 /-- [tqlmate_extract::pure::{impl core::fmt::Debug for tqlmate_extract::pure::Section}::fmt]:
-    Source: 'src/../../../src/pure.rs', lines 63:9-63:14
+    Source: 'src/../../../src/pure.rs', lines 66:9-66:14
     Visibility: public -/
 def pure.Section.Insts.CoreFmtDebug.fmt
   (self : pure.Section) (f : core.fmt.Formatter) :
@@ -609,42 +635,42 @@ def pure.Section.Insts.CoreFmtDebug.fmt
   | pure.Section.Down => core.fmt.Formatter.write_str f (toStr "Down")
 
 /-- Trait implementation: [tqlmate_extract::pure::{impl core::fmt::Debug for tqlmate_extract::pure::Section}]
-    Source: 'src/../../../src/pure.rs', lines 63:9-63:14 -/
+    Source: 'src/../../../src/pure.rs', lines 66:9-66:14 -/
 @[reducible]
 def pure.Section.Insts.CoreFmtDebug : core.fmt.Debug pure.Section := {
   fmt := pure.Section.Insts.CoreFmtDebug.fmt
 }
 
 /-- [tqlmate_extract::pure::{impl core::clone::Clone for tqlmate_extract::pure::Section}::clone]:
-    Source: 'src/../../../src/pure.rs', lines 63:16-63:21
+    Source: 'src/../../../src/pure.rs', lines 66:16-66:21
     Visibility: public -/
 def pure.Section.Insts.CoreCloneClone.clone
   (self : pure.Section) : Result pure.Section := do
   ok self
 
 /-- Trait implementation: [tqlmate_extract::pure::{impl core::clone::Clone for tqlmate_extract::pure::Section}]
-    Source: 'src/../../../src/pure.rs', lines 63:16-63:21 -/
+    Source: 'src/../../../src/pure.rs', lines 66:16-66:21 -/
 @[reducible]
 def pure.Section.Insts.CoreCloneClone : core.clone.Clone pure.Section := {
   clone := pure.Section.Insts.CoreCloneClone.clone
 }
 
 /-- Trait implementation: [tqlmate_extract::pure::{impl core::marker::Copy for tqlmate_extract::pure::Section}]
-    Source: 'src/../../../src/pure.rs', lines 63:23-63:27 -/
+    Source: 'src/../../../src/pure.rs', lines 66:23-66:27 -/
 @[reducible]
 def pure.Section.Insts.CoreMarkerCopy : core.marker.Copy pure.Section := {
   cloneInst := pure.Section.Insts.CoreCloneClone
 }
 
 /-- Trait implementation: [tqlmate_extract::pure::{impl core::marker::StructuralPartialEq for tqlmate_extract::pure::Section}]
-    Source: 'src/../../../src/pure.rs', lines 63:29-63:38 -/
+    Source: 'src/../../../src/pure.rs', lines 66:29-66:38 -/
 @[reducible]
 def pure.Section.Insts.CoreMarkerStructuralPartialEq :
   core.marker.StructuralPartialEq pure.Section := {
 }
 
 /-- [tqlmate_extract::pure::{impl core::cmp::PartialEq<tqlmate_extract::pure::Section> for tqlmate_extract::pure::Section}::eq]:
-    Source: 'src/../../../src/pure.rs', lines 63:29-63:38
+    Source: 'src/../../../src/pure.rs', lines 66:29-66:38
     Visibility: public -/
 def pure.Section.Insts.CoreCmpPartialEqSection.eq
   (self : pure.Section) (other : pure.Section) : Result Bool := do
@@ -653,7 +679,7 @@ def pure.Section.Insts.CoreCmpPartialEqSection.eq
   ok (self1 = other1)
 
 /-- Trait implementation: [tqlmate_extract::pure::{impl core::cmp::PartialEq<tqlmate_extract::pure::Section> for tqlmate_extract::pure::Section}]
-    Source: 'src/../../../src/pure.rs', lines 63:29-63:38 -/
+    Source: 'src/../../../src/pure.rs', lines 66:29-66:38 -/
 @[reducible]
 def pure.Section.Insts.CoreCmpPartialEqSection : core.cmp.PartialEq
   pure.Section pure.Section := {
@@ -661,14 +687,14 @@ def pure.Section.Insts.CoreCmpPartialEqSection : core.cmp.PartialEq
 }
 
 /-- [tqlmate_extract::pure::{impl core::cmp::Eq for tqlmate_extract::pure::Section}::assert_fields_are_eq]:
-    Source: 'src/../../../src/pure.rs', lines 63:40-63:42
+    Source: 'src/../../../src/pure.rs', lines 66:40-66:42
     Visibility: public -/
 def pure.Section.Insts.CoreCmpEq.assert_fields_are_eq
   (self : pure.Section) : Result Unit := do
   ok ()
 
 /-- Trait implementation: [tqlmate_extract::pure::{impl core::cmp::Eq for tqlmate_extract::pure::Section}]
-    Source: 'src/../../../src/pure.rs', lines 63:40-63:42 -/
+    Source: 'src/../../../src/pure.rs', lines 66:40-66:42 -/
 @[reducible]
 def pure.Section.Insts.CoreCmpEq : core.cmp.Eq pure.Section := {
   partialEqInst := pure.Section.Insts.CoreCmpPartialEqSection
@@ -676,7 +702,7 @@ def pure.Section.Insts.CoreCmpEq : core.cmp.Eq pure.Section := {
 }
 
 /-- [tqlmate_extract::pure::has_suffix]: loop body 0:
-    Source: 'src/../../../src/pure.rs', lines 77:4-84:1 -/
+    Source: 'src/../../../src/pure.rs', lines 80:4-87:1 -/
 @[rust_loop_body]
 def pure.has_suffix_loop.body
   (sb : Slice Std.U8) (suf : Slice Std.U8) (start : Std.Usize) (i : Std.Usize)
@@ -696,7 +722,7 @@ def pure.has_suffix_loop.body
   else ok (done true)
 
 /-- [tqlmate_extract::pure::has_suffix]: loop 0:
-    Source: 'src/../../../src/pure.rs', lines 77:4-84:1 -/
+    Source: 'src/../../../src/pure.rs', lines 80:4-87:1 -/
 @[rust_loop]
 def pure.has_suffix_loop
   (sb : Slice Std.U8) (suf : Slice Std.U8) (start : Std.Usize) (i : Std.Usize)
@@ -708,7 +734,7 @@ def pure.has_suffix_loop
     i
 
 /-- [tqlmate_extract::pure::has_suffix]:
-    Source: 'src/../../../src/pure.rs', lines 69:0-84:1 -/
+    Source: 'src/../../../src/pure.rs', lines 72:0-87:1 -/
 def pure.has_suffix (s : Str) (suffix : Str) : Result Bool := do
   let sb ← core.str.Str.as_bytes s
   let suf ← core.str.Str.as_bytes suffix
@@ -723,7 +749,7 @@ def pure.has_suffix (s : Str) (suffix : Str) : Result Bool := do
     pure.has_suffix_loop sb suf start 0#usize
 
 /-- [tqlmate_extract::pure::drop_suffix]:
-    Source: 'src/../../../src/pure.rs', lines 86:0-92:1 -/
+    Source: 'src/../../../src/pure.rs', lines 89:0-95:1 -/
 def pure.drop_suffix (s : Str) (suffix : Str) : Result (Option Str) := do
   let b ← pure.has_suffix s suffix
   if b
@@ -739,7 +765,7 @@ def pure.drop_suffix (s : Str) (suffix : Str) : Result (Option Str) := do
   else ok none
 
 /-- [tqlmate_extract::pure::has_prefix]: loop body 0:
-    Source: 'src/../../../src/pure.rs', lines 101:4-108:1 -/
+    Source: 'src/../../../src/pure.rs', lines 104:4-111:1 -/
 @[rust_loop_body]
 def pure.has_prefix_loop.body
   (sb : Slice Std.U8) (pre : Slice Std.U8) (i : Std.Usize) :
@@ -757,7 +783,7 @@ def pure.has_prefix_loop.body
   else ok (done true)
 
 /-- [tqlmate_extract::pure::has_prefix]: loop 0:
-    Source: 'src/../../../src/pure.rs', lines 101:4-108:1 -/
+    Source: 'src/../../../src/pure.rs', lines 104:4-111:1 -/
 @[rust_loop]
 def pure.has_prefix_loop
   (sb : Slice Std.U8) (pre : Slice Std.U8) (i : Std.Usize) : Result Bool := do
@@ -766,7 +792,7 @@ def pure.has_prefix_loop
     i
 
 /-- [tqlmate_extract::pure::has_prefix]:
-    Source: 'src/../../../src/pure.rs', lines 94:0-108:1 -/
+    Source: 'src/../../../src/pure.rs', lines 97:0-111:1 -/
 def pure.has_prefix (s : Str) («prefix» : Str) : Result Bool := do
   let sb ← core.str.Str.as_bytes s
   let pre ← core.str.Str.as_bytes «prefix»
@@ -777,7 +803,7 @@ def pure.has_prefix (s : Str) («prefix» : Str) : Result Bool := do
   else pure.has_prefix_loop sb pre 0#usize
 
 /-- [tqlmate_extract::pure::drop_prefix]:
-    Source: 'src/../../../src/pure.rs', lines 110:0-116:1 -/
+    Source: 'src/../../../src/pure.rs', lines 113:0-119:1 -/
 def pure.drop_prefix (s : Str) («prefix» : Str) : Result (Option Str) := do
   let b ← pure.has_prefix s «prefix»
   if b
@@ -791,7 +817,7 @@ def pure.drop_prefix (s : Str) («prefix» : Str) : Result (Option Str) := do
   else ok none
 
 /-- [tqlmate_extract::pure::find_byte]: loop body 0:
-    Source: 'src/../../../src/pure.rs', lines 121:4-128:1 -/
+    Source: 'src/../../../src/pure.rs', lines 124:4-131:1 -/
 @[rust_loop_body]
 def pure.find_byte_loop.body
   (b : Std.U8) (bytes : Slice Std.U8) (i : Std.Usize) :
@@ -808,7 +834,7 @@ def pure.find_byte_loop.body
   else ok (done none)
 
 /-- [tqlmate_extract::pure::find_byte]: loop 0:
-    Source: 'src/../../../src/pure.rs', lines 121:4-128:1 -/
+    Source: 'src/../../../src/pure.rs', lines 124:4-131:1 -/
 @[rust_loop]
 def pure.find_byte_loop
   (b : Std.U8) (bytes : Slice Std.U8) (i : Std.Usize) :
@@ -819,13 +845,13 @@ def pure.find_byte_loop
     i
 
 /-- [tqlmate_extract::pure::find_byte]:
-    Source: 'src/../../../src/pure.rs', lines 118:0-128:1 -/
+    Source: 'src/../../../src/pure.rs', lines 121:0-131:1 -/
 def pure.find_byte (s : Str) (b : Std.U8) : Result (Option Std.Usize) := do
   let bytes ← core.str.Str.as_bytes s
   pure.find_byte_loop b bytes 0#usize
 
 /-- [tqlmate_extract::pure::split_once_char]:
-    Source: 'src/../../../src/pure.rs', lines 130:0-135:1 -/
+    Source: 'src/../../../src/pure.rs', lines 133:0-138:1 -/
 def pure.split_once_char
   (s : Str) (sep : Std.U8) : Result (Option (Str × Str)) := do
   let o ← pure.find_byte s sep
@@ -844,7 +870,7 @@ def pure.split_once_char
     ok (some (s1, s2))
 
 /-- [tqlmate_extract::pure::trim_spaces]: loop body 0:
-    Source: 'src/../../../src/pure.rs', lines 140:4-142:5 -/
+    Source: 'src/../../../src/pure.rs', lines 143:4-145:5 -/
 @[rust_loop_body]
 def pure.trim_spaces_loop0.body
   (bytes : Slice Std.U8) (start : Std.Usize) :
@@ -865,7 +891,7 @@ def pure.trim_spaces_loop0.body
   else ok (done start)
 
 /-- [tqlmate_extract::pure::trim_spaces]: loop 0:
-    Source: 'src/../../../src/pure.rs', lines 140:4-142:5 -/
+    Source: 'src/../../../src/pure.rs', lines 143:4-145:5 -/
 @[rust_loop]
 def pure.trim_spaces_loop0
   (bytes : Slice Std.U8) (start : Std.Usize) : Result Std.Usize := do
@@ -874,7 +900,7 @@ def pure.trim_spaces_loop0
     start
 
 /-- [tqlmate_extract::pure::trim_spaces]: loop body 1:
-    Source: 'src/../../../src/pure.rs', lines 144:4-146:5 -/
+    Source: 'src/../../../src/pure.rs', lines 147:4-149:5 -/
 @[rust_loop_body]
 def pure.trim_spaces_loop1.body
   (bytes : Slice Std.U8) (start : Std.Usize) («end» : Std.Usize) :
@@ -894,7 +920,7 @@ def pure.trim_spaces_loop1.body
   else ok (done «end»)
 
 /-- [tqlmate_extract::pure::trim_spaces]: loop 1:
-    Source: 'src/../../../src/pure.rs', lines 144:4-146:5 -/
+    Source: 'src/../../../src/pure.rs', lines 147:4-149:5 -/
 @[rust_loop]
 def pure.trim_spaces_loop1
   (bytes : Slice Std.U8) (start : Std.Usize) («end» : Std.Usize) :
@@ -905,7 +931,7 @@ def pure.trim_spaces_loop1
     «end»
 
 /-- [tqlmate_extract::pure::trim_spaces]:
-    Source: 'src/../../../src/pure.rs', lines 137:0-148:1 -/
+    Source: 'src/../../../src/pure.rs', lines 140:0-151:1 -/
 def pure.trim_spaces (s : Str) : Result Str := do
   let bytes ← core.str.Str.as_bytes s
   let start ← pure.trim_spaces_loop0 bytes 0#usize
@@ -916,7 +942,7 @@ def pure.trim_spaces (s : Str) : Result Str := do
     { start, «end» := end1 }
 
 /-- [tqlmate_extract::pure::trim_underscores]: loop body 0:
-    Source: 'src/../../../src/pure.rs', lines 153:4-155:5 -/
+    Source: 'src/../../../src/pure.rs', lines 156:4-158:5 -/
 @[rust_loop_body]
 def pure.trim_underscores_loop0.body
   (bytes : Slice Std.U8) (start : Std.Usize) :
@@ -933,7 +959,7 @@ def pure.trim_underscores_loop0.body
   else ok (done start)
 
 /-- [tqlmate_extract::pure::trim_underscores]: loop 0:
-    Source: 'src/../../../src/pure.rs', lines 153:4-155:5 -/
+    Source: 'src/../../../src/pure.rs', lines 156:4-158:5 -/
 @[rust_loop]
 def pure.trim_underscores_loop0
   (bytes : Slice Std.U8) (start : Std.Usize) : Result Std.Usize := do
@@ -942,7 +968,7 @@ def pure.trim_underscores_loop0
     start
 
 /-- [tqlmate_extract::pure::trim_underscores]: loop body 1:
-    Source: 'src/../../../src/pure.rs', lines 157:4-159:5 -/
+    Source: 'src/../../../src/pure.rs', lines 160:4-162:5 -/
 @[rust_loop_body]
 def pure.trim_underscores_loop1.body
   (bytes : Slice Std.U8) (start : Std.Usize) («end» : Std.Usize) :
@@ -958,7 +984,7 @@ def pure.trim_underscores_loop1.body
   else ok (done «end»)
 
 /-- [tqlmate_extract::pure::trim_underscores]: loop 1:
-    Source: 'src/../../../src/pure.rs', lines 157:4-159:5 -/
+    Source: 'src/../../../src/pure.rs', lines 160:4-162:5 -/
 @[rust_loop]
 def pure.trim_underscores_loop1
   (bytes : Slice Std.U8) (start : Std.Usize) («end» : Std.Usize) :
@@ -969,7 +995,7 @@ def pure.trim_underscores_loop1
     «end»
 
 /-- [tqlmate_extract::pure::trim_underscores]:
-    Source: 'src/../../../src/pure.rs', lines 150:0-161:1 -/
+    Source: 'src/../../../src/pure.rs', lines 153:0-164:1 -/
 def pure.trim_underscores (s : Str) : Result Str := do
   let bytes ← core.str.Str.as_bytes s
   let start ← pure.trim_underscores_loop0 bytes 0#usize
@@ -980,7 +1006,7 @@ def pure.trim_underscores (s : Str) : Result Str := do
     { start, «end» := end1 }
 
 /-- [tqlmate_extract::pure::ends_with_underscore]:
-    Source: 'src/../../../src/pure.rs', lines 163:0-166:1 -/
+    Source: 'src/../../../src/pure.rs', lines 166:0-169:1 -/
 def pure.ends_with_underscore (s : Str) : Result Bool := do
   let bytes ← core.str.Str.as_bytes s
   let b ← core.slice.Slice.is_empty bytes
@@ -993,7 +1019,7 @@ def pure.ends_with_underscore (s : Str) : Result Bool := do
     ok (i2 = 95#u8)
 
 /-- [tqlmate_extract::pure::ascii_lower]:
-    Source: 'src/../../../src/pure.rs', lines 168:0-174:1 -/
+    Source: 'src/../../../src/pure.rs', lines 171:0-177:1 -/
 def pure.ascii_lower (c : Std.U8) : Result Std.U8 := do
   if c >= 65#u8
   then if c <= 90#u8
@@ -1002,7 +1028,7 @@ def pure.ascii_lower (c : Std.U8) : Result Std.U8 := do
   else ok c
 
 /-- [tqlmate_extract::pure::eq_ignore_ascii_case]: loop body 0:
-    Source: 'src/../../../src/pure.rs', lines 183:4-190:1 -/
+    Source: 'src/../../../src/pure.rs', lines 186:4-193:1 -/
 @[rust_loop_body]
 def pure.eq_ignore_ascii_case_loop.body
   (ab : Slice Std.U8) (bb : Slice Std.U8) (i : Std.Usize) :
@@ -1022,7 +1048,7 @@ def pure.eq_ignore_ascii_case_loop.body
   else ok (done true)
 
 /-- [tqlmate_extract::pure::eq_ignore_ascii_case]: loop 0:
-    Source: 'src/../../../src/pure.rs', lines 183:4-190:1 -/
+    Source: 'src/../../../src/pure.rs', lines 186:4-193:1 -/
 @[rust_loop]
 def pure.eq_ignore_ascii_case_loop
   (ab : Slice Std.U8) (bb : Slice Std.U8) (i : Std.Usize) : Result Bool := do
@@ -1031,7 +1057,7 @@ def pure.eq_ignore_ascii_case_loop
     i
 
 /-- [tqlmate_extract::pure::eq_ignore_ascii_case]:
-    Source: 'src/../../../src/pure.rs', lines 176:0-190:1 -/
+    Source: 'src/../../../src/pure.rs', lines 179:0-193:1 -/
 def pure.eq_ignore_ascii_case (a : Str) (b : Str) : Result Bool := do
   let ab ← core.str.Str.as_bytes a
   let bb ← core.str.Str.as_bytes b
@@ -1042,14 +1068,14 @@ def pure.eq_ignore_ascii_case (a : Str) (b : Str) : Result Bool := do
   else pure.eq_ignore_ascii_case_loop ab bb 0#usize
 
 /-- [tqlmate_extract::pure::is_ascii_digit_byte]:
-    Source: 'src/../../../src/pure.rs', lines 192:0-194:1 -/
+    Source: 'src/../../../src/pure.rs', lines 195:0-197:1 -/
 def pure.is_ascii_digit_byte (c : Std.U8) : Result Bool := do
   if c >= 48#u8
   then ok (c <= 57#u8)
   else ok false
 
 /-- [tqlmate_extract::pure::is_ascii_digits]: loop body 0:
-    Source: 'src/../../../src/pure.rs', lines 202:4-209:1 -/
+    Source: 'src/../../../src/pure.rs', lines 205:4-212:1 -/
 @[rust_loop_body]
 def pure.is_ascii_digits_loop.body
   (bytes : Slice Std.U8) (i : Std.Usize) :
@@ -1067,7 +1093,7 @@ def pure.is_ascii_digits_loop.body
   else ok (done true)
 
 /-- [tqlmate_extract::pure::is_ascii_digits]: loop 0:
-    Source: 'src/../../../src/pure.rs', lines 202:4-209:1 -/
+    Source: 'src/../../../src/pure.rs', lines 205:4-212:1 -/
 @[rust_loop]
 def pure.is_ascii_digits_loop
   (bytes : Slice Std.U8) (i : Std.Usize) : Result Bool := do
@@ -1076,7 +1102,7 @@ def pure.is_ascii_digits_loop
     i
 
 /-- [tqlmate_extract::pure::is_ascii_digits]:
-    Source: 'src/../../../src/pure.rs', lines 196:0-209:1 -/
+    Source: 'src/../../../src/pure.rs', lines 199:0-212:1 -/
 def pure.is_ascii_digits (s : Str) : Result Bool := do
   let bytes ← core.str.Str.as_bytes s
   let b ← core.slice.Slice.is_empty bytes
@@ -1085,7 +1111,7 @@ def pure.is_ascii_digits (s : Str) : Result Bool := do
   else pure.is_ascii_digits_loop bytes 0#usize
 
 /-- [tqlmate_extract::pure::is_ascii_alnum_byte]:
-    Source: 'src/../../../src/pure.rs', lines 211:0-213:1 -/
+    Source: 'src/../../../src/pure.rs', lines 214:0-216:1 -/
 def pure.is_ascii_alnum_byte (c : Std.U8) : Result Bool := do
   let b ← pure.is_ascii_digit_byte c
   if b
@@ -1103,7 +1129,7 @@ def pure.is_ascii_alnum_byte (c : Std.U8) : Result Bool := do
          else ok false
 
 /-- [tqlmate_extract::pure::parse_version_name]:
-    Source: 'src/../../../src/pure.rs', lines 216:0-232:1
+    Source: 'src/../../../src/pure.rs', lines 219:0-235:1
     Visibility: public -/
 def pure.parse_version_name
   (filename : Str) :
@@ -1139,7 +1165,7 @@ def pure.parse_version_name
         else ok (core.result.Result.Err pure.ParseError.VersionDigits)
 
 /-- [tqlmate_extract::pure::migration_marker]:
-    Source: 'src/../../../src/pure.rs', lines 302:0-313:1 -/
+    Source: 'src/../../../src/pure.rs', lines 305:0-316:1 -/
 def pure.migration_marker (line : Str) : Result (Option pure.Section) := do
   let trimmed ← pure.trim_spaces line
   let o ← pure.drop_prefix trimmed (toStr "--")
@@ -1160,7 +1186,7 @@ def pure.migration_marker (line : Str) : Result (Option pure.Section) := do
       pure.Section residual
 
 /-- [tqlmate_extract::pure::is_ascii_ws]:
-    Source: 'src/../../../src/pure.rs', lines 298:0-300:1 -/
+    Source: 'src/../../../src/pure.rs', lines 301:0-303:1 -/
 def pure.is_ascii_ws (c : Std.U8) : Result Bool := do
   if c = 32#u8
   then ok true
@@ -1172,7 +1198,7 @@ def pure.is_ascii_ws (c : Std.U8) : Result Bool := do
          else ok (c = 13#u8)
 
 /-- [tqlmate_extract::pure::trim_owned]: loop body 0:
-    Source: 'src/../../../src/pure.rs', lines 288:4-290:5 -/
+    Source: 'src/../../../src/pure.rs', lines 291:4-293:5 -/
 @[rust_loop_body]
 def pure.trim_owned_loop0.body
   (bytes : Slice Std.U8) (start : Std.Usize) :
@@ -1190,7 +1216,7 @@ def pure.trim_owned_loop0.body
   else ok (done start)
 
 /-- [tqlmate_extract::pure::trim_owned]: loop 0:
-    Source: 'src/../../../src/pure.rs', lines 288:4-290:5 -/
+    Source: 'src/../../../src/pure.rs', lines 291:4-293:5 -/
 @[rust_loop]
 def pure.trim_owned_loop0
   (bytes : Slice Std.U8) (start : Std.Usize) : Result Std.Usize := do
@@ -1199,7 +1225,7 @@ def pure.trim_owned_loop0
     start
 
 /-- [tqlmate_extract::pure::trim_owned]: loop body 1:
-    Source: 'src/../../../src/pure.rs', lines 292:4-294:5 -/
+    Source: 'src/../../../src/pure.rs', lines 295:4-297:5 -/
 @[rust_loop_body]
 def pure.trim_owned_loop1.body
   (bytes : Slice Std.U8) (start : Std.Usize) («end» : Std.Usize) :
@@ -1216,7 +1242,7 @@ def pure.trim_owned_loop1.body
   else ok (done «end»)
 
 /-- [tqlmate_extract::pure::trim_owned]: loop 1:
-    Source: 'src/../../../src/pure.rs', lines 292:4-294:5 -/
+    Source: 'src/../../../src/pure.rs', lines 295:4-297:5 -/
 @[rust_loop]
 def pure.trim_owned_loop1
   (bytes : Slice Std.U8) (start : Std.Usize) («end» : Std.Usize) :
@@ -1227,7 +1253,7 @@ def pure.trim_owned_loop1
     «end»
 
 /-- [tqlmate_extract::pure::trim_owned]:
-    Source: 'src/../../../src/pure.rs', lines 284:0-296:1 -/
+    Source: 'src/../../../src/pure.rs', lines 287:0-299:1 -/
 def pure.trim_owned (s : String) : Result String := do
   let bytes ← alloc.string.String.as_bytes s
   let start ← pure.trim_owned_loop0 bytes 0#usize
@@ -1240,7 +1266,7 @@ def pure.trim_owned (s : String) : Result String := do
   alloc.string.ToString.Blanket.to_string Str.Insts.CoreFmtDisplay s1
 
 /-- [tqlmate_extract::pure::split_up_down]: loop body 1:
-    Source: 'src/../../../src/pure.rs', lines 246:8-248:9
+    Source: 'src/../../../src/pure.rs', lines 249:8-251:9
     Visibility: public -/
 @[rust_loop_body]
 def pure.split_up_down_loop0_loop0.body
@@ -1258,7 +1284,7 @@ def pure.split_up_down_loop0_loop0.body
   else ok (done i)
 
 /-- [tqlmate_extract::pure::split_up_down]: loop 1:
-    Source: 'src/../../../src/pure.rs', lines 246:8-248:9
+    Source: 'src/../../../src/pure.rs', lines 249:8-251:9
     Visibility: public -/
 @[rust_loop]
 def pure.split_up_down_loop0_loop0
@@ -1268,7 +1294,7 @@ def pure.split_up_down_loop0_loop0
     i
 
 /-- [tqlmate_extract::pure::split_up_down]: loop body 0:
-    Source: 'src/../../../src/pure.rs', lines 244:4-276:5
+    Source: 'src/../../../src/pure.rs', lines 247:4-279:5
     Visibility: public -/
 @[rust_loop_body]
 def pure.split_up_down_loop0.body
@@ -1331,7 +1357,7 @@ def pure.split_up_down_loop0.body
   else ok (done (up, down, saw_marker))
 
 /-- [tqlmate_extract::pure::split_up_down]: loop 0:
-    Source: 'src/../../../src/pure.rs', lines 244:4-276:5
+    Source: 'src/../../../src/pure.rs', lines 247:4-279:5
     Visibility: public -/
 @[rust_loop]
 def pure.split_up_down_loop0
@@ -1346,7 +1372,7 @@ def pure.split_up_down_loop0
     («section», up, down, saw_marker, i)
 
 /-- [tqlmate_extract::pure::split_up_down]:
-    Source: 'src/../../../src/pure.rs', lines 235:0-282:1
+    Source: 'src/../../../src/pure.rs', lines 238:0-285:1
     Visibility: public -/
 def pure.split_up_down
   (text : Str) :
@@ -1378,7 +1404,7 @@ def pure.split_up_down
       ok (core.result.Result.Ok (s, s1))
 
 /-- [tqlmate_extract::pure::version_in]: loop body 0:
-    Source: 'src/../../../src/pure.rs', lines 334:4-341:1 -/
+    Source: 'src/../../../src/pure.rs', lines 340:4-347:1 -/
 @[rust_loop_body]
 def pure.version_in_loop.body
   (applied : Slice pure.Version) (v : pure.Version) (i : Std.Usize) :
@@ -1396,7 +1422,7 @@ def pure.version_in_loop.body
   else ok (done false)
 
 /-- [tqlmate_extract::pure::version_in]: loop 0:
-    Source: 'src/../../../src/pure.rs', lines 334:4-341:1 -/
+    Source: 'src/../../../src/pure.rs', lines 340:4-347:1 -/
 @[rust_loop]
 def pure.version_in_loop
   (applied : Slice pure.Version) (v : pure.Version) (i : Std.Usize) :
@@ -1407,14 +1433,14 @@ def pure.version_in_loop
     i
 
 /-- [tqlmate_extract::pure::version_in]:
-    Source: 'src/../../../src/pure.rs', lines 332:0-341:1 -/
+    Source: 'src/../../../src/pure.rs', lines 338:0-347:1 -/
 @[reducible]
 def pure.version_in
   (applied : Slice pure.Version) (v : pure.Version) : Result Bool := do
   pure.version_in_loop applied v 0#usize
 
 /-- [tqlmate_extract::pure::status_rows]: loop body 0:
-    Source: 'src/../../../src/pure.rs', lines 319:4-328:5
+    Source: 'src/../../../src/pure.rs', lines 325:4-334:5
     Visibility: public -/
 @[rust_loop_body]
 def pure.status_rows_loop.body
@@ -1441,7 +1467,7 @@ def pure.status_rows_loop.body
   else ok (done out)
 
 /-- [tqlmate_extract::pure::status_rows]: loop 0:
-    Source: 'src/../../../src/pure.rs', lines 319:4-328:5
+    Source: 'src/../../../src/pure.rs', lines 325:4-334:5
     Visibility: public -/
 @[rust_loop]
 def pure.status_rows_loop
@@ -1455,7 +1481,7 @@ def pure.status_rows_loop
     (out, i)
 
 /-- [tqlmate_extract::pure::status_rows]:
-    Source: 'src/../../../src/pure.rs', lines 316:0-330:1
+    Source: 'src/../../../src/pure.rs', lines 319:0-336:1
     Visibility: public -/
 @[reducible]
 def pure.status_rows
@@ -1466,7 +1492,7 @@ def pure.status_rows
     pure.MigrationStatus)) 0#usize
 
 /-- [tqlmate_extract::pure::pending_versions]: loop body 0:
-    Source: 'src/../../../src/pure.rs', lines 348:4-357:5
+    Source: 'src/../../../src/pure.rs', lines 354:4-363:5
     Visibility: public -/
 @[rust_loop_body]
 def pure.pending_versions_loop.body
@@ -1492,7 +1518,7 @@ def pure.pending_versions_loop.body
   else ok (done out)
 
 /-- [tqlmate_extract::pure::pending_versions]: loop 0:
-    Source: 'src/../../../src/pure.rs', lines 348:4-357:5
+    Source: 'src/../../../src/pure.rs', lines 354:4-363:5
     Visibility: public -/
 @[rust_loop]
 def pure.pending_versions_loop
@@ -1505,7 +1531,7 @@ def pure.pending_versions_loop
     (out, i)
 
 /-- [tqlmate_extract::pure::pending_versions]:
-    Source: 'src/../../../src/pure.rs', lines 344:0-359:1
+    Source: 'src/../../../src/pure.rs', lines 350:0-365:1
     Visibility: public -/
 def pure.pending_versions
   (files : Slice pure.MigrationId) (applied : Slice pure.Version) :
@@ -1515,7 +1541,7 @@ def pure.pending_versions
   pure.pending_versions_loop rows (alloc.vec.Vec.new pure.Version) 0#usize
 
 /-- [tqlmate_extract::pure::applied_among]: loop body 0:
-    Source: 'src/../../../src/pure.rs', lines 366:4-375:5
+    Source: 'src/../../../src/pure.rs', lines 372:4-381:5
     Visibility: public -/
 @[rust_loop_body]
 def pure.applied_among_loop.body
@@ -1541,7 +1567,7 @@ def pure.applied_among_loop.body
   else ok (done out)
 
 /-- [tqlmate_extract::pure::applied_among]: loop 0:
-    Source: 'src/../../../src/pure.rs', lines 366:4-375:5
+    Source: 'src/../../../src/pure.rs', lines 372:4-381:5
     Visibility: public -/
 @[rust_loop]
 def pure.applied_among_loop
@@ -1554,7 +1580,7 @@ def pure.applied_among_loop
     (out, i)
 
 /-- [tqlmate_extract::pure::applied_among]:
-    Source: 'src/../../../src/pure.rs', lines 362:0-377:1
+    Source: 'src/../../../src/pure.rs', lines 368:0-383:1
     Visibility: public -/
 def pure.applied_among
   (files : Slice pure.MigrationId) (applied : Slice pure.Version) :
@@ -1564,7 +1590,7 @@ def pure.applied_among
   pure.applied_among_loop rows (alloc.vec.Vec.new pure.Version) 0#usize
 
 /-- [tqlmate_extract::pure::pending_applied_disjoint]: loop body 0:
-    Source: 'src/../../../src/pure.rs', lines 386:4-393:5
+    Source: 'src/../../../src/pure.rs', lines 392:4-399:5
     Visibility: public -/
 @[rust_loop_body]
 def pure.pending_applied_disjoint_loop0.body
@@ -1583,7 +1609,7 @@ def pure.pending_applied_disjoint_loop0.body
   else ok (done ())
 
 /-- [tqlmate_extract::pure::pending_applied_disjoint]: loop 0:
-    Source: 'src/../../../src/pure.rs', lines 386:4-393:5
+    Source: 'src/../../../src/pure.rs', lines 392:4-399:5
     Visibility: public -/
 @[rust_loop]
 def pure.pending_applied_disjoint_loop0
@@ -1596,7 +1622,7 @@ def pure.pending_applied_disjoint_loop0
     i
 
 /-- [tqlmate_extract::pure::pending_applied_disjoint]: loop body 1:
-    Source: 'src/../../../src/pure.rs', lines 396:4-411:5
+    Source: 'src/../../../src/pure.rs', lines 402:4-417:5
     Visibility: public -/
 @[rust_loop_body]
 def pure.pending_applied_disjoint_loop1.body
@@ -1625,7 +1651,7 @@ def pure.pending_applied_disjoint_loop1.body
   else ok (done ok1)
 
 /-- [tqlmate_extract::pure::pending_applied_disjoint]: loop 1:
-    Source: 'src/../../../src/pure.rs', lines 396:4-411:5
+    Source: 'src/../../../src/pure.rs', lines 402:4-417:5
     Visibility: public -/
 @[rust_loop]
 def pure.pending_applied_disjoint_loop1
@@ -1640,7 +1666,7 @@ def pure.pending_applied_disjoint_loop1
     (i, ok1)
 
 /-- [tqlmate_extract::pure::pending_applied_disjoint]:
-    Source: 'src/../../../src/pure.rs', lines 382:0-413:1
+    Source: 'src/../../../src/pure.rs', lines 388:0-419:1
     Visibility: public -/
 def pure.pending_applied_disjoint
   (files : Slice pure.MigrationId) (applied : Slice pure.Version) :
@@ -1651,7 +1677,7 @@ def pure.pending_applied_disjoint
   pure.pending_applied_disjoint_loop1 applied rows 0#usize true
 
 /-- [tqlmate_extract::pure::max_version]: loop body 0:
-    Source: 'src/../../../src/pure.rs', lines 448:4-453:5 -/
+    Source: 'src/../../../src/pure.rs', lines 454:4-459:5 -/
 @[rust_loop_body]
 def pure.max_version_loop.body
   (applied : Slice pure.Version) (best : Std.Usize) (i : Std.Usize) :
@@ -1672,7 +1698,7 @@ def pure.max_version_loop.body
   else ok (done best)
 
 /-- [tqlmate_extract::pure::max_version]: loop 0:
-    Source: 'src/../../../src/pure.rs', lines 448:4-453:5 -/
+    Source: 'src/../../../src/pure.rs', lines 454:4-459:5 -/
 @[rust_loop]
 def pure.max_version_loop
   (applied : Slice pure.Version) (best : Std.Usize) (i : Std.Usize) :
@@ -1683,7 +1709,7 @@ def pure.max_version_loop
     (best, i)
 
 /-- [tqlmate_extract::pure::max_version]:
-    Source: 'src/../../../src/pure.rs', lines 442:0-455:1 -/
+    Source: 'src/../../../src/pure.rs', lines 448:0-461:1 -/
 def pure.max_version
   (applied : Slice pure.Version) : Result (Option pure.Version) := do
   let b ← core.slice.Slice.is_empty applied
@@ -1696,13 +1722,13 @@ def pure.max_version
     ok (some v1)
 
 /-- [tqlmate_extract::pure::str_lt]:
-    Source: 'src/../../../src/pure.rs', lines 438:0-440:1 -/
+    Source: 'src/../../../src/pure.rs', lines 444:0-446:1 -/
 def pure.str_lt (a : Str) (b : Str) : Result Bool := do
   Shared1A.Insts.CoreCmpPartialOrdShared0B.lt Str.Insts.CoreCmpPartialOrdStr a
     b
 
 /-- [tqlmate_extract::pure::check_strict_order]: loop body 0:
-    Source: 'src/../../../src/pure.rs', lines 425:4-436:1
+    Source: 'src/../../../src/pure.rs', lines 431:4-442:1
     Visibility: public -/
 @[rust_loop_body]
 def pure.check_strict_order_loop.body
@@ -1733,7 +1759,7 @@ def pure.check_strict_order_loop.body
   else ok (done (core.result.Result.Ok ()))
 
 /-- [tqlmate_extract::pure::check_strict_order]: loop 0:
-    Source: 'src/../../../src/pure.rs', lines 425:4-436:1
+    Source: 'src/../../../src/pure.rs', lines 431:4-442:1
     Visibility: public -/
 @[rust_loop]
 def pure.check_strict_order_loop
@@ -1746,7 +1772,7 @@ def pure.check_strict_order_loop
     i
 
 /-- [tqlmate_extract::pure::check_strict_order]:
-    Source: 'src/../../../src/pure.rs', lines 416:0-436:1
+    Source: 'src/../../../src/pure.rs', lines 422:0-442:1
     Visibility: public -/
 def pure.check_strict_order
   (files : Slice pure.MigrationId) (applied : Slice pure.Version) :
@@ -1758,7 +1784,7 @@ def pure.check_strict_order
   | some m => pure.check_strict_order_loop files applied m 0#usize
 
 /-- [tqlmate_extract::pure::slugify]: loop body 0:
-    Source: 'src/../../../src/pure.rs', lines 462:4-472:5
+    Source: 'src/../../../src/pure.rs', lines 468:4-478:5
     Visibility: public -/
 @[rust_loop_body]
 def pure.slugify_loop.body
@@ -1789,7 +1815,7 @@ def pure.slugify_loop.body
   else ok (done out)
 
 /-- [tqlmate_extract::pure::slugify]: loop 0:
-    Source: 'src/../../../src/pure.rs', lines 462:4-472:5
+    Source: 'src/../../../src/pure.rs', lines 468:4-478:5
     Visibility: public -/
 @[rust_loop]
 def pure.slugify_loop
@@ -1799,7 +1825,7 @@ def pure.slugify_loop
     (out, i)
 
 /-- [tqlmate_extract::pure::slugify]:
-    Source: 'src/../../../src/pure.rs', lines 458:0-479:1
+    Source: 'src/../../../src/pure.rs', lines 464:0-485:1
     Visibility: public -/
 def pure.slugify («name» : Str) : Result String := do
   let out ← alloc.string.String.new
@@ -1815,7 +1841,7 @@ def pure.slugify («name» : Str) : Result String := do
   else alloc.string.ToString.Blanket.to_string Str.Insts.CoreFmtDisplay trimmed
 
 /-- [tqlmate_extract::pure::find_label]: loop body 0:
-    Source: 'src/../../../src/pure.rs', lines 505:4-512:1 -/
+    Source: 'src/../../../src/pure.rs', lines 511:4-518:1 -/
 @[rust_loop_body]
 def pure.find_label_loop.body
   (files : Slice pure.MigrationId) (v : pure.Version) (i : Std.Usize) :
@@ -1834,7 +1860,7 @@ def pure.find_label_loop.body
   else ok (done none)
 
 /-- [tqlmate_extract::pure::find_label]: loop 0:
-    Source: 'src/../../../src/pure.rs', lines 505:4-512:1 -/
+    Source: 'src/../../../src/pure.rs', lines 511:4-518:1 -/
 @[rust_loop]
 def pure.find_label_loop
   (files : Slice pure.MigrationId) (v : pure.Version) (i : Std.Usize) :
@@ -1845,7 +1871,7 @@ def pure.find_label_loop
     i
 
 /-- [tqlmate_extract::pure::find_label]:
-    Source: 'src/../../../src/pure.rs', lines 503:0-512:1 -/
+    Source: 'src/../../../src/pure.rs', lines 509:0-518:1 -/
 @[reducible]
 def pure.find_label
   (files : Slice pure.MigrationId) (v : pure.Version) :
@@ -1854,7 +1880,7 @@ def pure.find_label
   pure.find_label_loop files v 0#usize
 
 /-- [tqlmate_extract::pure::dump_header]: loop body 0:
-    Source: 'src/../../../src/pure.rs', lines 488:8-497:9
+    Source: 'src/../../../src/pure.rs', lines 494:8-503:9
     Visibility: public -/
 @[rust_loop_body]
 def pure.dump_header_loop.body
@@ -1885,7 +1911,7 @@ def pure.dump_header_loop.body
   else ok (done out)
 
 /-- [tqlmate_extract::pure::dump_header]: loop 0:
-    Source: 'src/../../../src/pure.rs', lines 488:8-497:9
+    Source: 'src/../../../src/pure.rs', lines 494:8-503:9
     Visibility: public -/
 @[rust_loop]
 def pure.dump_header_loop
@@ -1898,7 +1924,7 @@ def pure.dump_header_loop
     (out, i)
 
 /-- [tqlmate_extract::pure::dump_header]:
-    Source: 'src/../../../src/pure.rs', lines 482:0-501:1
+    Source: 'src/../../../src/pure.rs', lines 488:0-507:1
     Visibility: public -/
 def pure.dump_header
   (applied : Slice pure.Version) (files : Slice pure.MigrationId) :
@@ -1918,8 +1944,1086 @@ def pure.dump_header
     alloc.string.String.push out1 '
 '
 
+/-- [tqlmate_extract::pure::{impl core::fmt::Debug for tqlmate_extract::pure::MigrationSpec}::fmt]:
+    Source: 'src/../../../src/pure.rs', lines 525:9-525:14
+    Visibility: public -/
+def pure.MigrationSpec.Insts.CoreFmtDebug.fmt
+  (self : pure.MigrationSpec) (f : core.fmt.Formatter) :
+  Result ((core.result.Result Unit core.fmt.Error) × core.fmt.Formatter)
+  := do
+  let dyn := Dyn.mk _ pure.Version.Insts.CoreFmtDebug self.version
+  let dyn1 := Dyn.mk _ alloc.string.String.Insts.CoreFmtDebug self.name
+  let dyn2 := Dyn.mk _ alloc.string.String.Insts.CoreFmtDebug self.up
+  let dyn3 :=
+    Dyn.mk _ (core.fmt.DebugShared alloc.string.String.Insts.CoreFmtDebug)
+      self.down
+  core.fmt.Formatter.debug_struct_field4_finish f (toStr "MigrationSpec")
+    (toStr "version") dyn (toStr "name") dyn1 (toStr "up") dyn2 (toStr "down")
+    dyn3
+
+/-- Trait implementation: [tqlmate_extract::pure::{impl core::fmt::Debug for tqlmate_extract::pure::MigrationSpec}]
+    Source: 'src/../../../src/pure.rs', lines 525:9-525:14 -/
+@[reducible]
+def pure.MigrationSpec.Insts.CoreFmtDebug : core.fmt.Debug pure.MigrationSpec
+  := {
+  fmt := pure.MigrationSpec.Insts.CoreFmtDebug.fmt
+}
+
+/-- [tqlmate_extract::pure::{impl core::clone::Clone for tqlmate_extract::pure::MigrationSpec}::clone]:
+    Source: 'src/../../../src/pure.rs', lines 525:16-525:21
+    Visibility: public -/
+def pure.MigrationSpec.Insts.CoreCloneClone.clone
+  (self : pure.MigrationSpec) : Result pure.MigrationSpec := do
+  let v ← pure.Version.Insts.CoreCloneClone.clone self.version
+  let s ← alloc.string.String.Insts.CoreCloneClone.clone self.name
+  let s1 ← alloc.string.String.Insts.CoreCloneClone.clone self.up
+  let s2 ← alloc.string.String.Insts.CoreCloneClone.clone self.down
+  ok { version := v, «name» := s, up := s1, down := s2 }
+
+/-- Trait implementation: [tqlmate_extract::pure::{impl core::clone::Clone for tqlmate_extract::pure::MigrationSpec}]
+    Source: 'src/../../../src/pure.rs', lines 525:16-525:21 -/
+@[reducible]
+def pure.MigrationSpec.Insts.CoreCloneClone : core.clone.Clone
+  pure.MigrationSpec := {
+  clone := pure.MigrationSpec.Insts.CoreCloneClone.clone
+}
+
+/-- Trait implementation: [tqlmate_extract::pure::{impl core::marker::StructuralPartialEq for tqlmate_extract::pure::MigrationSpec}]
+    Source: 'src/../../../src/pure.rs', lines 525:23-525:32 -/
+@[reducible]
+def pure.MigrationSpec.Insts.CoreMarkerStructuralPartialEq :
+  core.marker.StructuralPartialEq pure.MigrationSpec := {
+}
+
+/-- [tqlmate_extract::pure::{impl core::cmp::PartialEq<tqlmate_extract::pure::MigrationSpec> for tqlmate_extract::pure::MigrationSpec}::eq]:
+    Source: 'src/../../../src/pure.rs', lines 525:23-525:32
+    Visibility: public -/
+def pure.MigrationSpec.Insts.CoreCmpPartialEqMigrationSpec.eq
+  (self : pure.MigrationSpec) (other : pure.MigrationSpec) : Result Bool := do
+  let b ←
+    pure.Version.Insts.CoreCmpPartialEqVersion.eq self.version other.version
+  if b
+  then
+    let b1 ←
+      alloc.string.String.Insts.CoreCmpPartialEqString.eq self.name other.name
+    if b1
+    then
+      let b2 ←
+        alloc.string.String.Insts.CoreCmpPartialEqString.eq self.up other.up
+      if b2
+      then
+        alloc.string.String.Insts.CoreCmpPartialEqString.eq self.down
+          other.down
+      else ok false
+    else ok false
+  else ok false
+
+/-- Trait implementation: [tqlmate_extract::pure::{impl core::cmp::PartialEq<tqlmate_extract::pure::MigrationSpec> for tqlmate_extract::pure::MigrationSpec}]
+    Source: 'src/../../../src/pure.rs', lines 525:23-525:32 -/
+@[reducible]
+def pure.MigrationSpec.Insts.CoreCmpPartialEqMigrationSpec : core.cmp.PartialEq
+  pure.MigrationSpec pure.MigrationSpec := {
+  eq := pure.MigrationSpec.Insts.CoreCmpPartialEqMigrationSpec.eq
+}
+
+/-- [tqlmate_extract::pure::{impl core::cmp::Eq for tqlmate_extract::pure::MigrationSpec}::assert_fields_are_eq]:
+    Source: 'src/../../../src/pure.rs', lines 525:34-525:36
+    Visibility: public -/
+def pure.MigrationSpec.Insts.CoreCmpEq.assert_fields_are_eq
+  (self : pure.MigrationSpec) : Result Unit := do
+  ok ()
+
+/-- Trait implementation: [tqlmate_extract::pure::{impl core::cmp::Eq for tqlmate_extract::pure::MigrationSpec}]
+    Source: 'src/../../../src/pure.rs', lines 525:34-525:36 -/
+@[reducible]
+def pure.MigrationSpec.Insts.CoreCmpEq : core.cmp.Eq pure.MigrationSpec := {
+  partialEqInst := pure.MigrationSpec.Insts.CoreCmpPartialEqMigrationSpec
+  assert_fields_are_eq :=
+    pure.MigrationSpec.Insts.CoreCmpEq.assert_fields_are_eq
+}
+
+/-- [tqlmate_extract::pure::{tqlmate_extract::pure::MigrationSpec}::label]:
+    Source: 'src/../../../src/pure.rs', lines 534:4-540:5
+    Visibility: public -/
+def pure.MigrationSpec.label (self : pure.MigrationSpec) : Result String := do
+  let out ← alloc.string.String.new
+  let s := self.version
+  let s1 ← alloc.string.String.Insts.CoreOpsDerefDerefStr.deref s
+  let out1 ← alloc.string.String.push_str out s1
+  let out2 ← alloc.string.String.push out1 '_'
+  let s2 ← alloc.string.String.Insts.CoreOpsDerefDerefStr.deref self.name
+  alloc.string.String.push_str out2 s2
+
+/-- [tqlmate_extract::pure::{impl core::fmt::Debug for tqlmate_extract::pure::Op}::fmt]:
+    Source: 'src/../../../src/pure.rs', lines 544:9-544:14
+    Visibility: public -/
+def pure.Op.Insts.CoreFmtDebug.fmt
+  (self : pure.Op) (f : core.fmt.Formatter) :
+  Result ((core.result.Result Unit core.fmt.Error) × core.fmt.Formatter)
+  := do
+  match self with
+  | pure.Op.ApplyUp __self_0 __self_1 =>
+    let __self_01 := Dyn.mk _ pure.Version.Insts.CoreFmtDebug __self_0
+    let __self_11 :=
+      Dyn.mk _ (core.fmt.DebugShared alloc.string.String.Insts.CoreFmtDebug)
+        __self_1
+    core.fmt.Formatter.debug_struct_field2_finish f (toStr "ApplyUp") (toStr
+      "version") __self_01 (toStr "up") __self_11
+  | pure.Op.ApplyDown __self_0 __self_1 =>
+    let __self_01 := Dyn.mk _ pure.Version.Insts.CoreFmtDebug __self_0
+    let __self_11 :=
+      Dyn.mk _ (core.fmt.DebugShared alloc.string.String.Insts.CoreFmtDebug)
+        __self_1
+    core.fmt.Formatter.debug_struct_field2_finish f (toStr "ApplyDown") (toStr
+      "version") __self_01 (toStr "down") __self_11
+
+/-- Trait implementation: [tqlmate_extract::pure::{impl core::fmt::Debug for tqlmate_extract::pure::Op}]
+    Source: 'src/../../../src/pure.rs', lines 544:9-544:14 -/
+@[reducible]
+def pure.Op.Insts.CoreFmtDebug : core.fmt.Debug pure.Op := {
+  fmt := pure.Op.Insts.CoreFmtDebug.fmt
+}
+
+/-- [tqlmate_extract::pure::{impl core::clone::Clone for tqlmate_extract::pure::Op}::clone]:
+    Source: 'src/../../../src/pure.rs', lines 544:16-544:21
+    Visibility: public -/
+def pure.Op.Insts.CoreCloneClone.clone (self : pure.Op) : Result pure.Op := do
+  match self with
+  | pure.Op.ApplyUp __self_0 __self_1 =>
+    let v ← pure.Version.Insts.CoreCloneClone.clone __self_0
+    let s ← alloc.string.String.Insts.CoreCloneClone.clone __self_1
+    ok (pure.Op.ApplyUp v s)
+  | pure.Op.ApplyDown __self_0 __self_1 =>
+    let v ← pure.Version.Insts.CoreCloneClone.clone __self_0
+    let s ← alloc.string.String.Insts.CoreCloneClone.clone __self_1
+    ok (pure.Op.ApplyDown v s)
+
+/-- Trait implementation: [tqlmate_extract::pure::{impl core::clone::Clone for tqlmate_extract::pure::Op}]
+    Source: 'src/../../../src/pure.rs', lines 544:16-544:21 -/
+@[reducible]
+def pure.Op.Insts.CoreCloneClone : core.clone.Clone pure.Op := {
+  clone := pure.Op.Insts.CoreCloneClone.clone
+}
+
+/-- Trait implementation: [tqlmate_extract::pure::{impl core::marker::StructuralPartialEq for tqlmate_extract::pure::Op}]
+    Source: 'src/../../../src/pure.rs', lines 544:23-544:32 -/
+@[reducible]
+def pure.Op.Insts.CoreMarkerStructuralPartialEq :
+  core.marker.StructuralPartialEq pure.Op := {
+}
+
+/-- [tqlmate_extract::pure::{impl core::cmp::PartialEq<tqlmate_extract::pure::Op> for tqlmate_extract::pure::Op}::eq]:
+    Source: 'src/../../../src/pure.rs', lines 544:23-544:32
+    Visibility: public -/
+def pure.Op.Insts.CoreCmpPartialEqOp.eq
+  (self : pure.Op) (other : pure.Op) : Result Bool := do
+  let self1 := read_discriminant self
+  let other1 := read_discriminant other
+  if self1 = other1
+  then
+    match self with
+    | pure.Op.ApplyUp __self_0 __self_1 =>
+      match other with
+      | pure.Op.ApplyUp __arg1_0 __arg1_1 =>
+        let b ←
+          pure.Version.Insts.CoreCmpPartialEqVersion.eq __self_0 __arg1_0
+        if b
+        then
+          alloc.string.String.Insts.CoreCmpPartialEqString.eq __self_1 __arg1_1
+        else ok false
+      | pure.Op.ApplyDown _ _ => fail panic
+    | pure.Op.ApplyDown __self_0 __self_1 =>
+      match other with
+      | pure.Op.ApplyUp _ _ => fail panic
+      | pure.Op.ApplyDown __arg1_0 __arg1_1 =>
+        let b ←
+          pure.Version.Insts.CoreCmpPartialEqVersion.eq __self_0 __arg1_0
+        if b
+        then
+          alloc.string.String.Insts.CoreCmpPartialEqString.eq __self_1 __arg1_1
+        else ok false
+  else ok false
+
+/-- Trait implementation: [tqlmate_extract::pure::{impl core::cmp::PartialEq<tqlmate_extract::pure::Op> for tqlmate_extract::pure::Op}]
+    Source: 'src/../../../src/pure.rs', lines 544:23-544:32 -/
+@[reducible]
+def pure.Op.Insts.CoreCmpPartialEqOp : core.cmp.PartialEq pure.Op pure.Op := {
+  eq := pure.Op.Insts.CoreCmpPartialEqOp.eq
+}
+
+/-- [tqlmate_extract::pure::{impl core::cmp::Eq for tqlmate_extract::pure::Op}::assert_fields_are_eq]:
+    Source: 'src/../../../src/pure.rs', lines 544:34-544:36
+    Visibility: public -/
+def pure.Op.Insts.CoreCmpEq.assert_fields_are_eq
+  (self : pure.Op) : Result Unit := do
+  ok ()
+
+/-- Trait implementation: [tqlmate_extract::pure::{impl core::cmp::Eq for tqlmate_extract::pure::Op}]
+    Source: 'src/../../../src/pure.rs', lines 544:34-544:36 -/
+@[reducible]
+def pure.Op.Insts.CoreCmpEq : core.cmp.Eq pure.Op := {
+  partialEqInst := pure.Op.Insts.CoreCmpPartialEqOp
+  assert_fields_are_eq := pure.Op.Insts.CoreCmpEq.assert_fields_are_eq
+}
+
+/-- [tqlmate_extract::pure::{impl core::fmt::Debug for tqlmate_extract::pure::State}::fmt]:
+    Source: 'src/../../../src/pure.rs', lines 554:9-554:14
+    Visibility: public -/
+def pure.State.Insts.CoreFmtDebug.fmt
+  (self : pure.State) (f : core.fmt.Formatter) :
+  Result ((core.result.Result Unit core.fmt.Error) × core.fmt.Formatter)
+  := do
+  let dyn :=
+    Dyn.mk _ (core.fmt.DebugShared (core.fmt.DebugVec
+      pure.Version.Insts.CoreFmtDebug)) self.applied
+  core.fmt.Formatter.debug_struct_field1_finish f (toStr "State") (toStr
+    "applied") dyn
+
+/-- Trait implementation: [tqlmate_extract::pure::{impl core::fmt::Debug for tqlmate_extract::pure::State}]
+    Source: 'src/../../../src/pure.rs', lines 554:9-554:14 -/
+@[reducible]
+def pure.State.Insts.CoreFmtDebug : core.fmt.Debug pure.State := {
+  fmt := pure.State.Insts.CoreFmtDebug.fmt
+}
+
+/-- [tqlmate_extract::pure::{impl core::clone::Clone for tqlmate_extract::pure::State}::clone]:
+    Source: 'src/../../../src/pure.rs', lines 554:16-554:21
+    Visibility: public -/
+def pure.State.Insts.CoreCloneClone.clone
+  (self : pure.State) : Result pure.State := do
+  let v ←
+    alloc.vec.CloneVec.clone pure.Version.Insts.CoreCloneClone self.applied
+  ok { applied := v }
+
+/-- Trait implementation: [tqlmate_extract::pure::{impl core::clone::Clone for tqlmate_extract::pure::State}]
+    Source: 'src/../../../src/pure.rs', lines 554:16-554:21 -/
+@[reducible]
+def pure.State.Insts.CoreCloneClone : core.clone.Clone pure.State := {
+  clone := pure.State.Insts.CoreCloneClone.clone
+}
+
+/-- Trait implementation: [tqlmate_extract::pure::{impl core::marker::StructuralPartialEq for tqlmate_extract::pure::State}]
+    Source: 'src/../../../src/pure.rs', lines 554:23-554:32 -/
+@[reducible]
+def pure.State.Insts.CoreMarkerStructuralPartialEq :
+  core.marker.StructuralPartialEq pure.State := {
+}
+
+/-- [tqlmate_extract::pure::{impl core::cmp::PartialEq<tqlmate_extract::pure::State> for tqlmate_extract::pure::State}::eq]:
+    Source: 'src/../../../src/pure.rs', lines 554:23-554:32
+    Visibility: public -/
+def pure.State.Insts.CoreCmpPartialEqState.eq
+  (self : pure.State) (other : pure.State) : Result Bool := do
+  alloc.vec.partial_eq.PartialEqVec.eq
+    pure.Version.Insts.CoreCmpPartialEqVersion self.applied other.applied
+
+/-- Trait implementation: [tqlmate_extract::pure::{impl core::cmp::PartialEq<tqlmate_extract::pure::State> for tqlmate_extract::pure::State}]
+    Source: 'src/../../../src/pure.rs', lines 554:23-554:32 -/
+@[reducible]
+def pure.State.Insts.CoreCmpPartialEqState : core.cmp.PartialEq pure.State
+  pure.State := {
+  eq := pure.State.Insts.CoreCmpPartialEqState.eq
+}
+
+/-- [tqlmate_extract::pure::{impl core::cmp::Eq for tqlmate_extract::pure::State}::assert_fields_are_eq]:
+    Source: 'src/../../../src/pure.rs', lines 554:34-554:36
+    Visibility: public -/
+def pure.State.Insts.CoreCmpEq.assert_fields_are_eq
+  (self : pure.State) : Result Unit := do
+  ok ()
+
+/-- Trait implementation: [tqlmate_extract::pure::{impl core::cmp::Eq for tqlmate_extract::pure::State}]
+    Source: 'src/../../../src/pure.rs', lines 554:34-554:36 -/
+@[reducible]
+def pure.State.Insts.CoreCmpEq : core.cmp.Eq pure.State := {
+  partialEqInst := pure.State.Insts.CoreCmpPartialEqState
+  assert_fields_are_eq := pure.State.Insts.CoreCmpEq.assert_fields_are_eq
+}
+
+/-- [tqlmate_extract::pure::{tqlmate_extract::pure::State}::new]:
+    Source: 'src/../../../src/pure.rs', lines 560:4-562:5
+    Visibility: public -/
+def pure.State.new
+  (applied : alloc.vec.Vec pure.Version) : Result pure.State := do
+  ok { applied }
+
+/-- [tqlmate_extract::pure::{tqlmate_extract::pure::State}::empty]:
+    Source: 'src/../../../src/pure.rs', lines 564:4-568:5
+    Visibility: public -/
+def pure.State.empty : Result pure.State := do
+  ok { applied := (alloc.vec.Vec.new pure.Version) }
+
+/-- [tqlmate_extract::pure::{impl core::fmt::Debug for tqlmate_extract::pure::PlanError}::fmt]:
+    Source: 'src/../../../src/pure.rs', lines 572:9-572:14
+    Visibility: public -/
+def pure.PlanError.Insts.CoreFmtDebug.fmt
+  (self : pure.PlanError) (f : core.fmt.Formatter) :
+  Result ((core.result.Result Unit core.fmt.Error) × core.fmt.Formatter)
+  := do
+  match self with
+  | pure.PlanError.EmptyUp __self_0 =>
+    let __self_01 :=
+      Dyn.mk _ (core.fmt.DebugShared pure.Version.Insts.CoreFmtDebug) __self_0
+    core.fmt.Formatter.debug_tuple_field1_finish f (toStr "EmptyUp") __self_01
+  | pure.PlanError.EmptyDown __self_0 __self_1 =>
+    let __self_01 := Dyn.mk _ pure.Version.Insts.CoreFmtDebug __self_0
+    let __self_11 :=
+      Dyn.mk _ (core.fmt.DebugShared alloc.string.String.Insts.CoreFmtDebug)
+        __self_1
+    core.fmt.Formatter.debug_struct_field2_finish f (toStr "EmptyDown") (toStr
+      "version") __self_01 (toStr "name") __self_11
+  | pure.PlanError.MissingFile __self_0 =>
+    let __self_01 :=
+      Dyn.mk _ (core.fmt.DebugShared pure.Version.Insts.CoreFmtDebug) __self_0
+    core.fmt.Formatter.debug_tuple_field1_finish f (toStr "MissingFile")
+      __self_01
+  | pure.PlanError.StrictOrder __self_0 __self_1 =>
+    let __self_01 := Dyn.mk _ pure.Version.Insts.CoreFmtDebug __self_0
+    let __self_11 :=
+      Dyn.mk _ (core.fmt.DebugShared pure.Version.Insts.CoreFmtDebug) __self_1
+    core.fmt.Formatter.debug_struct_field2_finish f (toStr "StrictOrder")
+      (toStr "pending") __self_01 (toStr "applied_up_to") __self_11
+
+/-- Trait implementation: [tqlmate_extract::pure::{impl core::fmt::Debug for tqlmate_extract::pure::PlanError}]
+    Source: 'src/../../../src/pure.rs', lines 572:9-572:14 -/
+@[reducible]
+def pure.PlanError.Insts.CoreFmtDebug : core.fmt.Debug pure.PlanError := {
+  fmt := pure.PlanError.Insts.CoreFmtDebug.fmt
+}
+
+/-- [tqlmate_extract::pure::{impl core::clone::Clone for tqlmate_extract::pure::PlanError}::clone]:
+    Source: 'src/../../../src/pure.rs', lines 572:16-572:21
+    Visibility: public -/
+def pure.PlanError.Insts.CoreCloneClone.clone
+  (self : pure.PlanError) : Result pure.PlanError := do
+  match self with
+  | pure.PlanError.EmptyUp __self_0 =>
+    let v ← pure.Version.Insts.CoreCloneClone.clone __self_0
+    ok (pure.PlanError.EmptyUp v)
+  | pure.PlanError.EmptyDown __self_0 __self_1 =>
+    let v ← pure.Version.Insts.CoreCloneClone.clone __self_0
+    let s ← alloc.string.String.Insts.CoreCloneClone.clone __self_1
+    ok (pure.PlanError.EmptyDown v s)
+  | pure.PlanError.MissingFile __self_0 =>
+    let v ← pure.Version.Insts.CoreCloneClone.clone __self_0
+    ok (pure.PlanError.MissingFile v)
+  | pure.PlanError.StrictOrder __self_0 __self_1 =>
+    let v ← pure.Version.Insts.CoreCloneClone.clone __self_0
+    let v1 ← pure.Version.Insts.CoreCloneClone.clone __self_1
+    ok (pure.PlanError.StrictOrder v v1)
+
+/-- Trait implementation: [tqlmate_extract::pure::{impl core::clone::Clone for tqlmate_extract::pure::PlanError}]
+    Source: 'src/../../../src/pure.rs', lines 572:16-572:21 -/
+@[reducible]
+def pure.PlanError.Insts.CoreCloneClone : core.clone.Clone pure.PlanError := {
+  clone := pure.PlanError.Insts.CoreCloneClone.clone
+}
+
+/-- Trait implementation: [tqlmate_extract::pure::{impl core::marker::StructuralPartialEq for tqlmate_extract::pure::PlanError}]
+    Source: 'src/../../../src/pure.rs', lines 572:23-572:32 -/
+@[reducible]
+def pure.PlanError.Insts.CoreMarkerStructuralPartialEq :
+  core.marker.StructuralPartialEq pure.PlanError := {
+}
+
+/-- [tqlmate_extract::pure::{impl core::cmp::PartialEq<tqlmate_extract::pure::PlanError> for tqlmate_extract::pure::PlanError}::eq]:
+    Source: 'src/../../../src/pure.rs', lines 572:23-572:32
+    Visibility: public -/
+def pure.PlanError.Insts.CoreCmpPartialEqPlanError.eq
+  (self : pure.PlanError) (other : pure.PlanError) : Result Bool := do
+  let self1 := read_discriminant self
+  let other1 := read_discriminant other
+  if self1 = other1
+  then
+    match self with
+    | pure.PlanError.EmptyUp __self_0 =>
+      match other with
+      | pure.PlanError.EmptyUp __arg1_0 =>
+        pure.Version.Insts.CoreCmpPartialEqVersion.eq __self_0 __arg1_0
+      | pure.PlanError.EmptyDown _ _ => fail panic
+      | pure.PlanError.MissingFile _ => fail panic
+      | pure.PlanError.StrictOrder _ _ => fail panic
+    | pure.PlanError.EmptyDown __self_0 __self_1 =>
+      match other with
+      | pure.PlanError.EmptyUp _ => fail panic
+      | pure.PlanError.EmptyDown __arg1_0 __arg1_1 =>
+        let b ←
+          pure.Version.Insts.CoreCmpPartialEqVersion.eq __self_0 __arg1_0
+        if b
+        then
+          alloc.string.String.Insts.CoreCmpPartialEqString.eq __self_1 __arg1_1
+        else ok false
+      | pure.PlanError.MissingFile _ => fail panic
+      | pure.PlanError.StrictOrder _ _ => fail panic
+    | pure.PlanError.MissingFile __self_0 =>
+      match other with
+      | pure.PlanError.EmptyUp _ => fail panic
+      | pure.PlanError.EmptyDown _ _ => fail panic
+      | pure.PlanError.MissingFile __arg1_0 =>
+        pure.Version.Insts.CoreCmpPartialEqVersion.eq __self_0 __arg1_0
+      | pure.PlanError.StrictOrder _ _ => fail panic
+    | pure.PlanError.StrictOrder __self_0 __self_1 =>
+      match other with
+      | pure.PlanError.EmptyUp _ => fail panic
+      | pure.PlanError.EmptyDown _ _ => fail panic
+      | pure.PlanError.MissingFile _ => fail panic
+      | pure.PlanError.StrictOrder __arg1_0 __arg1_1 =>
+        let b ←
+          pure.Version.Insts.CoreCmpPartialEqVersion.eq __self_0 __arg1_0
+        if b
+        then pure.Version.Insts.CoreCmpPartialEqVersion.eq __self_1 __arg1_1
+        else ok false
+  else ok false
+
+/-- Trait implementation: [tqlmate_extract::pure::{impl core::cmp::PartialEq<tqlmate_extract::pure::PlanError> for tqlmate_extract::pure::PlanError}]
+    Source: 'src/../../../src/pure.rs', lines 572:23-572:32 -/
+@[reducible]
+def pure.PlanError.Insts.CoreCmpPartialEqPlanError : core.cmp.PartialEq
+  pure.PlanError pure.PlanError := {
+  eq := pure.PlanError.Insts.CoreCmpPartialEqPlanError.eq
+}
+
+/-- [tqlmate_extract::pure::{impl core::cmp::Eq for tqlmate_extract::pure::PlanError}::assert_fields_are_eq]:
+    Source: 'src/../../../src/pure.rs', lines 572:34-572:36
+    Visibility: public -/
+def pure.PlanError.Insts.CoreCmpEq.assert_fields_are_eq
+  (self : pure.PlanError) : Result Unit := do
+  ok ()
+
+/-- Trait implementation: [tqlmate_extract::pure::{impl core::cmp::Eq for tqlmate_extract::pure::PlanError}]
+    Source: 'src/../../../src/pure.rs', lines 572:34-572:36 -/
+@[reducible]
+def pure.PlanError.Insts.CoreCmpEq : core.cmp.Eq pure.PlanError := {
+  partialEqInst := pure.PlanError.Insts.CoreCmpPartialEqPlanError
+  assert_fields_are_eq := pure.PlanError.Insts.CoreCmpEq.assert_fields_are_eq
+}
+
+/-- [tqlmate_extract::pure::{impl core::fmt::Debug for tqlmate_extract::pure::StepError}::fmt]:
+    Source: 'src/../../../src/pure.rs', lines 581:9-581:14
+    Visibility: public -/
+def pure.StepError.Insts.CoreFmtDebug.fmt
+  (self : pure.StepError) (f : core.fmt.Formatter) :
+  Result ((core.result.Result Unit core.fmt.Error) × core.fmt.Formatter)
+  := do
+  match self with
+  | pure.StepError.EmptyUp __self_0 =>
+    let __self_01 :=
+      Dyn.mk _ (core.fmt.DebugShared pure.Version.Insts.CoreFmtDebug) __self_0
+    core.fmt.Formatter.debug_tuple_field1_finish f (toStr "EmptyUp") __self_01
+  | pure.StepError.EmptyDown __self_0 =>
+    let __self_01 :=
+      Dyn.mk _ (core.fmt.DebugShared pure.Version.Insts.CoreFmtDebug) __self_0
+    core.fmt.Formatter.debug_tuple_field1_finish f (toStr "EmptyDown")
+      __self_01
+
+/-- Trait implementation: [tqlmate_extract::pure::{impl core::fmt::Debug for tqlmate_extract::pure::StepError}]
+    Source: 'src/../../../src/pure.rs', lines 581:9-581:14 -/
+@[reducible]
+def pure.StepError.Insts.CoreFmtDebug : core.fmt.Debug pure.StepError := {
+  fmt := pure.StepError.Insts.CoreFmtDebug.fmt
+}
+
+/-- [tqlmate_extract::pure::{impl core::clone::Clone for tqlmate_extract::pure::StepError}::clone]:
+    Source: 'src/../../../src/pure.rs', lines 581:16-581:21
+    Visibility: public -/
+def pure.StepError.Insts.CoreCloneClone.clone
+  (self : pure.StepError) : Result pure.StepError := do
+  match self with
+  | pure.StepError.EmptyUp __self_0 =>
+    let v ← pure.Version.Insts.CoreCloneClone.clone __self_0
+    ok (pure.StepError.EmptyUp v)
+  | pure.StepError.EmptyDown __self_0 =>
+    let v ← pure.Version.Insts.CoreCloneClone.clone __self_0
+    ok (pure.StepError.EmptyDown v)
+
+/-- Trait implementation: [tqlmate_extract::pure::{impl core::clone::Clone for tqlmate_extract::pure::StepError}]
+    Source: 'src/../../../src/pure.rs', lines 581:16-581:21 -/
+@[reducible]
+def pure.StepError.Insts.CoreCloneClone : core.clone.Clone pure.StepError := {
+  clone := pure.StepError.Insts.CoreCloneClone.clone
+}
+
+/-- Trait implementation: [tqlmate_extract::pure::{impl core::marker::StructuralPartialEq for tqlmate_extract::pure::StepError}]
+    Source: 'src/../../../src/pure.rs', lines 581:23-581:32 -/
+@[reducible]
+def pure.StepError.Insts.CoreMarkerStructuralPartialEq :
+  core.marker.StructuralPartialEq pure.StepError := {
+}
+
+/-- [tqlmate_extract::pure::{impl core::cmp::PartialEq<tqlmate_extract::pure::StepError> for tqlmate_extract::pure::StepError}::eq]:
+    Source: 'src/../../../src/pure.rs', lines 581:23-581:32
+    Visibility: public -/
+def pure.StepError.Insts.CoreCmpPartialEqStepError.eq
+  (self : pure.StepError) (other : pure.StepError) : Result Bool := do
+  let self1 := read_discriminant self
+  let other1 := read_discriminant other
+  if self1 = other1
+  then
+    match self with
+    | pure.StepError.EmptyUp __self_0 =>
+      match other with
+      | pure.StepError.EmptyUp __arg1_0 =>
+        pure.Version.Insts.CoreCmpPartialEqVersion.eq __self_0 __arg1_0
+      | pure.StepError.EmptyDown _ => fail panic
+    | pure.StepError.EmptyDown __self_0 =>
+      match other with
+      | pure.StepError.EmptyUp _ => fail panic
+      | pure.StepError.EmptyDown __arg1_0 =>
+        pure.Version.Insts.CoreCmpPartialEqVersion.eq __self_0 __arg1_0
+  else ok false
+
+/-- Trait implementation: [tqlmate_extract::pure::{impl core::cmp::PartialEq<tqlmate_extract::pure::StepError> for tqlmate_extract::pure::StepError}]
+    Source: 'src/../../../src/pure.rs', lines 581:23-581:32 -/
+@[reducible]
+def pure.StepError.Insts.CoreCmpPartialEqStepError : core.cmp.PartialEq
+  pure.StepError pure.StepError := {
+  eq := pure.StepError.Insts.CoreCmpPartialEqStepError.eq
+}
+
+/-- [tqlmate_extract::pure::{impl core::cmp::Eq for tqlmate_extract::pure::StepError}::assert_fields_are_eq]:
+    Source: 'src/../../../src/pure.rs', lines 581:34-581:36
+    Visibility: public -/
+def pure.StepError.Insts.CoreCmpEq.assert_fields_are_eq
+  (self : pure.StepError) : Result Unit := do
+  ok ()
+
+/-- Trait implementation: [tqlmate_extract::pure::{impl core::cmp::Eq for tqlmate_extract::pure::StepError}]
+    Source: 'src/../../../src/pure.rs', lines 581:34-581:36 -/
+@[reducible]
+def pure.StepError.Insts.CoreCmpEq : core.cmp.Eq pure.StepError := {
+  partialEqInst := pure.StepError.Insts.CoreCmpPartialEqStepError
+  assert_fields_are_eq := pure.StepError.Insts.CoreCmpEq.assert_fields_are_eq
+}
+
+/-- [tqlmate_extract::pure::body_is_empty]: loop body 0:
+    Source: 'src/../../../src/pure.rs', lines 591:4-598:1
+    Visibility: public -/
+@[rust_loop_body]
+def pure.body_is_empty_loop.body
+  (bytes : Slice Std.U8) (i : Std.Usize) :
+  Result (ControlFlow Std.Usize Bool)
+  := do
+  let i1 := Slice.len bytes
+  if i < i1
+  then
+    let i2 ← Slice.index_usize bytes i
+    let b ← pure.is_ascii_ws i2
+    if b
+    then let i3 ← i + 1#usize
+         ok (cont i3)
+    else ok (done false)
+  else ok (done true)
+
+/-- [tqlmate_extract::pure::body_is_empty]: loop 0:
+    Source: 'src/../../../src/pure.rs', lines 591:4-598:1
+    Visibility: public -/
+@[rust_loop]
+def pure.body_is_empty_loop
+  (bytes : Slice Std.U8) (i : Std.Usize) : Result Bool := do
+  loop
+    (fun i1 => pure.body_is_empty_loop.body bytes i1)
+    i
+
+/-- [tqlmate_extract::pure::body_is_empty]:
+    Source: 'src/../../../src/pure.rs', lines 588:0-598:1
+    Visibility: public -/
+def pure.body_is_empty (s : Str) : Result Bool := do
+  let bytes ← core.str.Str.as_bytes s
+  pure.body_is_empty_loop bytes 0#usize
+
+/-- [tqlmate_extract::pure::find_spec]: loop body 0:
+    Source: 'src/../../../src/pure.rs', lines 602:4-609:1 -/
+@[rust_loop_body]
+def pure.find_spec_loop.body
+  (files : Slice pure.MigrationSpec) (v : pure.Version) (i : Std.Usize) :
+  Result (ControlFlow Std.Usize (Option pure.MigrationSpec))
+  := do
+  let i1 := Slice.len files
+  if i < i1
+  then
+    let ms ← Slice.index_usize files i
+    let b ← pure.Version.Insts.CoreCmpPartialEqVersion.eq ms.version v
+    if b
+    then ok (done (some ms))
+    else let i2 ← i + 1#usize
+         ok (cont i2)
+  else ok (done none)
+
+/-- [tqlmate_extract::pure::find_spec]: loop 0:
+    Source: 'src/../../../src/pure.rs', lines 602:4-609:1 -/
+@[rust_loop]
+def pure.find_spec_loop
+  (files : Slice pure.MigrationSpec) (v : pure.Version) (i : Std.Usize) :
+  Result (Option pure.MigrationSpec)
+  := do
+  loop
+    (fun i1 => pure.find_spec_loop.body files v i1)
+    i
+
+/-- [tqlmate_extract::pure::find_spec]:
+    Source: 'src/../../../src/pure.rs', lines 600:0-609:1 -/
+@[reducible]
+def pure.find_spec
+  (files : Slice pure.MigrationSpec) (v : pure.Version) :
+  Result (Option pure.MigrationSpec)
+  := do
+  pure.find_spec_loop files v 0#usize
+
+/-- [tqlmate_extract::pure::check_strict_order_specs]: loop body 0:
+    Source: 'src/../../../src/pure.rs', lines 706:4-717:1 -/
+@[rust_loop_body]
+def pure.check_strict_order_specs_loop.body
+  (files : Slice pure.MigrationSpec) (applied : Slice pure.Version)
+  (max : pure.Version) (i : Std.Usize) :
+  Result (ControlFlow Std.Usize (core.result.Result Unit
+    pure.StrictOrderError))
+  := do
+  let i1 := Slice.len files
+  if i < i1
+  then
+    let ms ← Slice.index_usize files i
+    let pending ← pure.Version.Insts.CoreCloneClone.clone ms.version
+    let b ← pure.version_in applied pending
+    if b
+    then let i2 ← i + 1#usize
+         ok (cont i2)
+    else
+      let s ← pure.Version.as_str pending
+      let s1 ← pure.Version.as_str max
+      let b1 ← pure.str_lt s s1
+      if b1
+      then
+        ok (done (core.result.Result.Err (pure.StrictOrderError.OutOfOrder
+          pending max)))
+      else let i2 ← i + 1#usize
+           ok (cont i2)
+  else ok (done (core.result.Result.Ok ()))
+
+/-- [tqlmate_extract::pure::check_strict_order_specs]: loop 0:
+    Source: 'src/../../../src/pure.rs', lines 706:4-717:1 -/
+@[rust_loop]
+def pure.check_strict_order_specs_loop
+  (files : Slice pure.MigrationSpec) (applied : Slice pure.Version)
+  (max : pure.Version) (i : Std.Usize) :
+  Result (core.result.Result Unit pure.StrictOrderError)
+  := do
+  loop
+    (fun i1 => pure.check_strict_order_specs_loop.body files applied max i1)
+    i
+
+/-- [tqlmate_extract::pure::check_strict_order_specs]:
+    Source: 'src/../../../src/pure.rs', lines 697:0-717:1 -/
+def pure.check_strict_order_specs
+  (files : Slice pure.MigrationSpec) (applied : Slice pure.Version) :
+  Result (core.result.Result Unit pure.StrictOrderError)
+  := do
+  let o ← pure.max_version applied
+  match o with
+  | none => ok (core.result.Result.Ok ())
+  | some m => pure.check_strict_order_specs_loop files applied m 0#usize
+
+/-- [tqlmate_extract::pure::plan_migrate]: loop body 0:
+    Source: 'src/../../../src/pure.rs', lines 635:4-649:1
+    Visibility: public -/
+@[rust_loop_body]
+def pure.plan_migrate_loop0.body
+  (files : Slice pure.MigrationSpec) (applied : Slice pure.Version)
+  (plan : alloc.vec.Vec pure.Op) (i : Std.Usize) :
+  Result (ControlFlow ((alloc.vec.Vec pure.Op) × Std.Usize)
+    (core.result.Result (alloc.vec.Vec pure.Op) pure.PlanError))
+  := do
+  let i1 := Slice.len files
+  if i < i1
+  then
+    let f ← Slice.index_usize files i
+    let b ← pure.version_in applied f.version
+    if b
+    then let i2 ← i + 1#usize
+         ok (cont (plan, i2))
+    else
+      let s ← alloc.string.String.Insts.CoreOpsDerefDerefStr.deref f.up
+      let b1 ← pure.body_is_empty s
+      if b1
+      then
+        let v ← pure.Version.Insts.CoreCloneClone.clone f.version
+        ok (done (core.result.Result.Err (pure.PlanError.EmptyUp v)))
+      else
+        let v ← pure.Version.Insts.CoreCloneClone.clone f.version
+        let s1 ← alloc.string.String.Insts.CoreCloneClone.clone f.up
+        let plan1 ← alloc.vec.Vec.push plan (pure.Op.ApplyUp v s1)
+        let i2 ← i + 1#usize
+        ok (cont (plan1, i2))
+  else ok (done (core.result.Result.Ok plan))
+
+/-- [tqlmate_extract::pure::plan_migrate]: loop 0:
+    Source: 'src/../../../src/pure.rs', lines 635:4-649:1
+    Visibility: public -/
+@[rust_loop]
+def pure.plan_migrate_loop0
+  (files : Slice pure.MigrationSpec) (applied : Slice pure.Version)
+  (plan : alloc.vec.Vec pure.Op) (i : Std.Usize) :
+  Result (core.result.Result (alloc.vec.Vec pure.Op) pure.PlanError)
+  := do
+  loop
+    (fun (plan1, i1) => pure.plan_migrate_loop0.body files applied plan1 i1)
+    (plan, i)
+
+/-- [tqlmate_extract::pure::plan_migrate]: loop body 1:
+    Source: 'src/../../../src/pure.rs', lines 635:4-649:1
+    Visibility: public -/
+@[rust_loop_body]
+def pure.plan_migrate_loop1.body
+  (files : Slice pure.MigrationSpec) (applied : Slice pure.Version)
+  (plan : alloc.vec.Vec pure.Op) (i : Std.Usize) :
+  Result (ControlFlow ((alloc.vec.Vec pure.Op) × Std.Usize)
+    (core.result.Result (alloc.vec.Vec pure.Op) pure.PlanError))
+  := do
+  let i1 := Slice.len files
+  if i < i1
+  then
+    let f ← Slice.index_usize files i
+    let b ← pure.version_in applied f.version
+    if b
+    then let i2 ← i + 1#usize
+         ok (cont (plan, i2))
+    else
+      let s ← alloc.string.String.Insts.CoreOpsDerefDerefStr.deref f.up
+      let b1 ← pure.body_is_empty s
+      if b1
+      then
+        let v ← pure.Version.Insts.CoreCloneClone.clone f.version
+        ok (done (core.result.Result.Err (pure.PlanError.EmptyUp v)))
+      else
+        let v ← pure.Version.Insts.CoreCloneClone.clone f.version
+        let s1 ← alloc.string.String.Insts.CoreCloneClone.clone f.up
+        let plan1 ← alloc.vec.Vec.push plan (pure.Op.ApplyUp v s1)
+        let i2 ← i + 1#usize
+        ok (cont (plan1, i2))
+  else ok (done (core.result.Result.Ok plan))
+
+/-- [tqlmate_extract::pure::plan_migrate]: loop 1:
+    Source: 'src/../../../src/pure.rs', lines 635:4-649:1
+    Visibility: public -/
+@[rust_loop]
+def pure.plan_migrate_loop1
+  (files : Slice pure.MigrationSpec) (applied : Slice pure.Version)
+  (plan : alloc.vec.Vec pure.Op) (i : Std.Usize) :
+  Result (core.result.Result (alloc.vec.Vec pure.Op) pure.PlanError)
+  := do
+  loop
+    (fun (plan1, i1) => pure.plan_migrate_loop1.body files applied plan1 i1)
+    (plan, i)
+
+/-- [tqlmate_extract::pure::plan_migrate]:
+    Source: 'src/../../../src/pure.rs', lines 614:0-649:1
+    Visibility: public -/
+def pure.plan_migrate
+  (files : Slice pure.MigrationSpec) (applied : Slice pure.Version)
+  (strict : Bool) :
+  Result (core.result.Result (alloc.vec.Vec pure.Op) pure.PlanError)
+  := do
+  if strict
+  then
+    let r ← pure.check_strict_order_specs files applied
+    match r with
+    | core.result.Result.Ok _ =>
+      pure.plan_migrate_loop0 files applied (alloc.vec.Vec.new pure.Op) 0#usize
+    | core.result.Result.Err soe =>
+      let ⟨ pending, applied_up_to ⟩ := soe
+      ok (core.result.Result.Err (pure.PlanError.StrictOrder pending
+        applied_up_to))
+  else
+    pure.plan_migrate_loop1 files applied (alloc.vec.Vec.new pure.Op) 0#usize
+
+/-- [tqlmate_extract::pure::plan_rollback]:
+    Source: 'src/../../../src/pure.rs', lines 654:0-675:1
+    Visibility: public -/
+def pure.plan_rollback
+  (files : Slice pure.MigrationSpec) (applied : Slice pure.Version) :
+  Result (core.result.Result (alloc.vec.Vec pure.Op) pure.PlanError)
+  := do
+  let b ← core.slice.Slice.is_empty applied
+  if b
+  then ok (core.result.Result.Ok (alloc.vec.Vec.new pure.Op))
+  else
+    let i := Slice.len applied
+    let i1 ← i - 1#usize
+    let v ← Slice.index_usize applied i1
+    let version ← pure.Version.Insts.CoreCloneClone.clone v
+    let o ← pure.find_spec files version
+    match o with
+    | none => ok (core.result.Result.Err (pure.PlanError.MissingFile version))
+    | some m =>
+      let s ← alloc.string.String.Insts.CoreOpsDerefDerefStr.deref m.down
+      let b1 ← pure.body_is_empty s
+      if b1
+      then
+        let v1 ← pure.Version.Insts.CoreCloneClone.clone m.version
+        let s1 ← alloc.string.String.Insts.CoreCloneClone.clone m.name
+        ok (core.result.Result.Err (pure.PlanError.EmptyDown v1 s1))
+      else
+        let v1 ← pure.Version.Insts.CoreCloneClone.clone m.version
+        let s1 ← alloc.string.String.Insts.CoreCloneClone.clone m.down
+        let plan ←
+          alloc.vec.Vec.push (alloc.vec.Vec.new pure.Op) (pure.Op.ApplyDown v1
+            s1)
+        ok (core.result.Result.Ok plan)
+
+/-- [tqlmate_extract::pure::plan_status]: loop body 0:
+    Source: 'src/../../../src/pure.rs', lines 684:4-693:5
+    Visibility: public -/
+@[rust_loop_body]
+def pure.plan_status_loop.body
+  (files : Slice pure.MigrationSpec) (applied : Slice pure.Version)
+  (out : alloc.vec.Vec (pure.MigrationSpec × pure.MigrationStatus))
+  (i : Std.Usize) :
+  Result (ControlFlow ((alloc.vec.Vec (pure.MigrationSpec ×
+    pure.MigrationStatus)) × Std.Usize) (alloc.vec.Vec (pure.MigrationSpec ×
+    pure.MigrationStatus)))
+  := do
+  let i1 := Slice.len files
+  if i < i1
+  then
+    let ms ← Slice.index_usize files i
+    let f ← pure.MigrationSpec.Insts.CoreCloneClone.clone ms
+    let b ← pure.version_in applied f.version
+    let status ←
+      if b
+      then ok pure.MigrationStatus.Applied
+      else ok pure.MigrationStatus.Pending
+    let out1 ← alloc.vec.Vec.push out (f, status)
+    let i2 ← i + 1#usize
+    ok (cont (out1, i2))
+  else ok (done out)
+
+/-- [tqlmate_extract::pure::plan_status]: loop 0:
+    Source: 'src/../../../src/pure.rs', lines 684:4-693:5
+    Visibility: public -/
+@[rust_loop]
+def pure.plan_status_loop
+  (files : Slice pure.MigrationSpec) (applied : Slice pure.Version)
+  (out : alloc.vec.Vec (pure.MigrationSpec × pure.MigrationStatus))
+  (i : Std.Usize) :
+  Result (alloc.vec.Vec (pure.MigrationSpec × pure.MigrationStatus))
+  := do
+  loop
+    (fun (out1, i1) => pure.plan_status_loop.body files applied out1 i1)
+    (out, i)
+
+/-- [tqlmate_extract::pure::plan_status]:
+    Source: 'src/../../../src/pure.rs', lines 678:0-695:1
+    Visibility: public -/
+@[reducible]
+def pure.plan_status
+  (files : Slice pure.MigrationSpec) (applied : Slice pure.Version) :
+  Result (alloc.vec.Vec (pure.MigrationSpec × pure.MigrationStatus))
+  := do
+  pure.plan_status_loop files applied (alloc.vec.Vec.new (pure.MigrationSpec ×
+    pure.MigrationStatus)) 0#usize
+
+/-- [tqlmate_extract::pure::remove_last_matching]: loop body 0:
+    Source: 'src/../../../src/pure.rs', lines 754:4-759:5 -/
+@[rust_loop_body]
+def pure.remove_last_matching_loop0.body
+  (applied : Slice pure.Version) (v : pure.Version) (last : Option Std.Usize)
+  (i : Std.Usize) :
+  Result (ControlFlow ((Option Std.Usize) × Std.Usize) (Option Std.Usize))
+  := do
+  let i1 := Slice.len applied
+  if i < i1
+  then
+    let v1 ← Slice.index_usize applied i
+    let b ← pure.Version.Insts.CoreCmpPartialEqVersion.eq v1 v
+    let last1 ← if b
+                  then ok (some i)
+                  else ok last
+    let i2 ← i + 1#usize
+    ok (cont (last1, i2))
+  else ok (done last)
+
+/-- [tqlmate_extract::pure::remove_last_matching]: loop 0:
+    Source: 'src/../../../src/pure.rs', lines 754:4-759:5 -/
+@[rust_loop]
+def pure.remove_last_matching_loop0
+  (applied : Slice pure.Version) (v : pure.Version) (last : Option Std.Usize)
+  (i : Std.Usize) :
+  Result (Option Std.Usize)
+  := do
+  loop
+    (fun (last1, i1) => pure.remove_last_matching_loop0.body applied v last1
+      i1)
+    (last, i)
+
+/-- [tqlmate_extract::pure::remove_last_matching]: loop body 1:
+    Source: 'src/../../../src/pure.rs', lines 762:4-768:5 -/
+@[rust_loop_body]
+def pure.remove_last_matching_loop1.body
+  (applied : Slice pure.Version) (last : Option Std.Usize) (i : Std.Usize)
+  (out : alloc.vec.Vec pure.Version) :
+  Result (ControlFlow (Std.Usize × (alloc.vec.Vec pure.Version))
+    (alloc.vec.Vec pure.Version))
+  := do
+  let i1 := Slice.len applied
+  if i < i1
+  then
+    let out1 ←
+      match last with
+      | none =>
+        do
+        let v ← Slice.index_usize applied i
+        let v1 ← pure.Version.Insts.CoreCloneClone.clone v
+        alloc.vec.Vec.push out v1
+      | some j =>
+        if i = j
+        then ok out
+        else
+          do
+          let v ← Slice.index_usize applied i
+          let v1 ← pure.Version.Insts.CoreCloneClone.clone v
+          alloc.vec.Vec.push out v1
+    let i2 ← i + 1#usize
+    ok (cont (i2, out1))
+  else ok (done out)
+
+/-- [tqlmate_extract::pure::remove_last_matching]: loop 1:
+    Source: 'src/../../../src/pure.rs', lines 762:4-768:5 -/
+@[rust_loop]
+def pure.remove_last_matching_loop1
+  (applied : Slice pure.Version) (last : Option Std.Usize) (i : Std.Usize)
+  (out : alloc.vec.Vec pure.Version) :
+  Result (alloc.vec.Vec pure.Version)
+  := do
+  loop
+    (fun (i1, out1) => pure.remove_last_matching_loop1.body applied last i1
+      out1)
+    (i, out)
+
+/-- [tqlmate_extract::pure::remove_last_matching]:
+    Source: 'src/../../../src/pure.rs', lines 751:0-770:1 -/
+def pure.remove_last_matching
+  (applied : Slice pure.Version) (v : pure.Version) :
+  Result (alloc.vec.Vec pure.Version)
+  := do
+  let last ← pure.remove_last_matching_loop0 applied v none 0#usize
+  pure.remove_last_matching_loop1 applied last 0#usize (alloc.vec.Vec.new
+    pure.Version)
+
+/-- [tqlmate_extract::pure::clone_versions]: loop body 0:
+    Source: 'src/../../../src/pure.rs', lines 743:4-746:5 -/
+@[rust_loop_body]
+def pure.clone_versions_loop.body
+  (vs : Slice pure.Version) (out : alloc.vec.Vec pure.Version) (i : Std.Usize)
+  :
+  Result (ControlFlow ((alloc.vec.Vec pure.Version) × Std.Usize)
+    (alloc.vec.Vec pure.Version))
+  := do
+  let i1 := Slice.len vs
+  if i < i1
+  then
+    let v ← Slice.index_usize vs i
+    let v1 ← pure.Version.Insts.CoreCloneClone.clone v
+    let out1 ← alloc.vec.Vec.push out v1
+    let i2 ← i + 1#usize
+    ok (cont (out1, i2))
+  else ok (done out)
+
+/-- [tqlmate_extract::pure::clone_versions]: loop 0:
+    Source: 'src/../../../src/pure.rs', lines 743:4-746:5 -/
+@[rust_loop]
+def pure.clone_versions_loop
+  (vs : Slice pure.Version) (out : alloc.vec.Vec pure.Version) (i : Std.Usize)
+  :
+  Result (alloc.vec.Vec pure.Version)
+  := do
+  loop
+    (fun (out1, i1) => pure.clone_versions_loop.body vs out1 i1)
+    (out, i)
+
+/-- [tqlmate_extract::pure::clone_versions]:
+    Source: 'src/../../../src/pure.rs', lines 740:0-748:1 -/
+@[reducible]
+def pure.clone_versions
+  (vs : Slice pure.Version) : Result (alloc.vec.Vec pure.Version) := do
+  pure.clone_versions_loop vs (alloc.vec.Vec.new pure.Version) 0#usize
+
+/-- [tqlmate_extract::pure::step]:
+    Source: 'src/../../../src/pure.rs', lines 720:0-738:1
+    Visibility: public -/
+def pure.step
+  (state : pure.State) (op : pure.Op) :
+  Result (core.result.Result pure.State pure.StepError)
+  := do
+  match op with
+  | pure.Op.ApplyUp version up =>
+    let s ← alloc.string.String.Insts.CoreOpsDerefDerefStr.deref up
+    let b ← pure.body_is_empty s
+    if b
+    then
+      let v ← pure.Version.Insts.CoreCloneClone.clone version
+      ok (core.result.Result.Err (pure.StepError.EmptyUp v))
+    else
+      let s1 := alloc.vec.Vec.deref state.applied
+      let applied ← pure.clone_versions s1
+      let v ← pure.Version.Insts.CoreCloneClone.clone version
+      let applied1 ← alloc.vec.Vec.push applied v
+      ok (core.result.Result.Ok { applied := applied1 })
+  | pure.Op.ApplyDown version down =>
+    let s ← alloc.string.String.Insts.CoreOpsDerefDerefStr.deref down
+    let b ← pure.body_is_empty s
+    if b
+    then
+      let v ← pure.Version.Insts.CoreCloneClone.clone version
+      ok (core.result.Result.Err (pure.StepError.EmptyDown v))
+    else
+      let s1 := alloc.vec.Vec.deref state.applied
+      let applied ← pure.remove_last_matching s1 version
+      ok (core.result.Result.Ok { applied })
+
+/-- [tqlmate_extract::pure::run]: loop body 0:
+    Source: 'src/../../../src/pure.rs', lines 778:4-786:1
+    Visibility: public -/
+@[rust_loop_body]
+def pure.run_loop.body
+  (plan : Slice pure.Op) (s : pure.State) (i : Std.Usize) :
+  Result (ControlFlow (pure.State × Std.Usize) (core.result.Result pure.State
+    pure.StepError))
+  := do
+  let i1 := Slice.len plan
+  if i < i1
+  then
+    let o ← Slice.index_usize plan i
+    let r ← pure.step s o
+    match r with
+    | core.result.Result.Ok next => let i2 ← i + 1#usize
+                                    ok (cont (next, i2))
+    | core.result.Result.Err _ => ok (done r)
+  else ok (done (core.result.Result.Ok s))
+
+/-- [tqlmate_extract::pure::run]: loop 0:
+    Source: 'src/../../../src/pure.rs', lines 778:4-786:1
+    Visibility: public -/
+@[rust_loop]
+def pure.run_loop
+  (plan : Slice pure.Op) (s : pure.State) (i : Std.Usize) :
+  Result (core.result.Result pure.State pure.StepError)
+  := do
+  loop
+    (fun (s1, i1) => pure.run_loop.body plan s1 i1)
+    (s, i)
+
+/-- [tqlmate_extract::pure::run]:
+    Source: 'src/../../../src/pure.rs', lines 773:0-786:1
+    Visibility: public -/
+def pure.run
+  (state : pure.State) (plan : Slice pure.Op) :
+  Result (core.result.Result pure.State pure.StepError)
+  := do
+  let s := alloc.vec.Vec.deref state.applied
+  let v ← pure.clone_versions s
+  pure.run_loop plan { applied := v } 0#usize
+
 /-- [tqlmate_extract::pure::strip_dump_header]: loop body 1:
-    Source: 'src/../../../src/pure.rs', lines 523:8-525:9
+    Source: 'src/../../../src/pure.rs', lines 797:8-799:9
     Visibility: public -/
 @[rust_loop_body]
 def pure.strip_dump_header_loop0_loop0.body
@@ -1937,7 +3041,7 @@ def pure.strip_dump_header_loop0_loop0.body
   else ok (done i)
 
 /-- [tqlmate_extract::pure::strip_dump_header]: loop 1:
-    Source: 'src/../../../src/pure.rs', lines 523:8-525:9
+    Source: 'src/../../../src/pure.rs', lines 797:8-799:9
     Visibility: public -/
 @[rust_loop]
 def pure.strip_dump_header_loop0_loop0
@@ -1947,7 +3051,7 @@ def pure.strip_dump_header_loop0_loop0
     i
 
 /-- [tqlmate_extract::pure::strip_dump_header]: loop body 0:
-    Source: 'src/../../../src/pure.rs', lines 521:4-543:5
+    Source: 'src/../../../src/pure.rs', lines 795:4-817:5
     Visibility: public -/
 @[rust_loop_body]
 def pure.strip_dump_header_loop0.body
@@ -1995,7 +3099,7 @@ def pure.strip_dump_header_loop0.body
   else ok (done out)
 
 /-- [tqlmate_extract::pure::strip_dump_header]: loop 0:
-    Source: 'src/../../../src/pure.rs', lines 521:4-543:5
+    Source: 'src/../../../src/pure.rs', lines 795:4-817:5
     Visibility: public -/
 @[rust_loop]
 def pure.strip_dump_header_loop0
@@ -2009,7 +3113,7 @@ def pure.strip_dump_header_loop0
     (started, out, first, i)
 
 /-- [tqlmate_extract::pure::strip_dump_header]:
-    Source: 'src/../../../src/pure.rs', lines 515:0-545:1
+    Source: 'src/../../../src/pure.rs', lines 789:0-819:1
     Visibility: public -/
 def pure.strip_dump_header (text : Str) : Result String := do
   let out ← alloc.string.String.new

@@ -2,3 +2,4 @@ import TqlmateExtract.Types
 import TqlmateExtract.FunsExternal
 import TqlmateExtract.Funs
 import TqlmateExtract.ExtrProperties
+import TqlmateExtract.CoreProperties

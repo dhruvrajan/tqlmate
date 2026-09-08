@@ -20,7 +20,8 @@ aeneas -backend lean -split-files -gen-lib-entry -all-computable -dest "$OUT" tq
 
 # Discard generated FunsExternal template — filled models live at
 # TqlmateExtract/FunsExternal.lean and must not be overwritten by extract.
-rm -f "$OUT/FunsExternal.lean" "$OUT/FunsExternal_Template.lean"
+# Also drop the generated crate entry point; Lake uses verification/lean/TqlmateExtract.lean.
+rm -f "$OUT/FunsExternal.lean" "$OUT/FunsExternal_Template.lean" "$OUT/TqlmateExtract.lean"
 
 # Aeneas currently emits PartialOrd.lt/gt.default applied to the whole trait
 # impl; Lean models expect the `partial_cmp` field. Normalize after extract.

@@ -1,17 +1,27 @@
-//! Parity between Rust `pure` helpers and ExtrProperties Lean fixtures.
+//! Parity between Rust `pure` helpers and ExtrProperties / CoreProperties Lean fixtures.
 //!
-//! Each case below matches a `native_decide` / `Result.reducesTo` example in
-//! `verification/lean/TqlmateExtract/ExtrProperties.lean`. Keep them in sync.
+//! Cases below match `native_decide` / `Result.reducesTo` examples in
+//! `verification/lean/TqlmateExtract/{ExtrProperties,CoreProperties}.lean`.
 
 use tqlmate::pure::{
-    check_strict_order, dump_header, parse_version_name, slugify, split_up_down, strip_dump_header,
-    MigrationId, ParseError, StrictOrderError, Version,
+    check_strict_order, dump_header, parse_version_name, plan_migrate, plan_rollback, run, slugify,
+    split_up_down, step, strip_dump_header, MigrationId, MigrationSpec, Op, ParseError, PlanError,
+    State, StepError, StrictOrderError, Version,
 };
 
 fn mid(version: &str, name: &str) -> MigrationId {
     MigrationId {
         version: Version::new(version),
         name: name.into(),
+    }
+}
+
+fn mspec(version: &str, up: &str, down: &str) -> MigrationSpec {
+    MigrationSpec {
+        version: Version::new(version),
+        name: version.into(),
+        up: up.into(),
+        down: down.into(),
     }
 }
 
@@ -85,4 +95,60 @@ fn lean_dump_strip_roundtrip() {
         strip_dump_header(&format!("{h}define\n  entity x;")),
         "define\n  entity x;"
     );
+}
+
+/// CoreProperties: migrate pending / idempotent / rollback inverse / rejects.
+#[test]
+fn lean_core_plan_and_run() {
+    let files = vec![
+        mspec("1", "u1", "d1"),
+        mspec("2", "u2", "d2"),
+        mspec("3", "u3", "d3"),
+    ];
+    let plan = plan_migrate(&files, &[Version::new("1")], false).unwrap();
+    assert_eq!(plan.len(), 2);
+    let next = run(&State::new(vec![Version::new("1")]), &plan).unwrap();
+    assert_eq!(
+        next.applied,
+        vec![Version::new("1"), Version::new("2"), Version::new("3")]
+    );
+    assert!(plan_migrate(&files, &next.applied, false)
+        .unwrap()
+        .is_empty());
+
+    assert!(matches!(
+        plan_migrate(&[mspec("1", "", "d")], &[], false),
+        Err(PlanError::EmptyUp(_))
+    ));
+    assert!(matches!(
+        plan_migrate(&files, &[Version::new("1"), Version::new("3")], true),
+        Err(PlanError::StrictOrder { .. })
+    ));
+    assert!(plan_rollback(&files, &[]).unwrap().is_empty());
+    assert!(matches!(
+        plan_rollback(&[], &[Version::new("9")]),
+        Err(PlanError::MissingFile(_))
+    ));
+
+    let s1 = step(
+        &State::empty(),
+        &Op::ApplyUp {
+            version: Version::new("1"),
+            up: "u1".into(),
+        },
+    )
+    .unwrap();
+    let down = plan_rollback(&files, &s1.applied).unwrap();
+    assert_eq!(run(&s1, &down).unwrap().applied, Vec::<Version>::new());
+
+    assert!(matches!(
+        step(
+            &State::empty(),
+            &Op::ApplyUp {
+                version: Version::new("1"),
+                up: "".into(),
+            }
+        ),
+        Err(StepError::EmptyUp(_))
+    ));
 }

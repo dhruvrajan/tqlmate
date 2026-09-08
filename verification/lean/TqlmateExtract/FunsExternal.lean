@@ -272,3 +272,10 @@ opaque alloc.string.ToString.Blanket.to_string
 def alloc.string.String.Insts.CoreConvertFromShared0Str.from
     (s : Str) : Result String :=
   ok (strToString s)
+
+/-- Hash is derived on `Version` for ledger `HashSet` use outside the extract.
+    The pure plan/interpreter never hashes; provide a no-op model for linkage. -/
+@[rust_fun "alloc::string::{core::hash::Hash<alloc::string::String>}::hash"]
+def alloc.string.String.Insts.CoreHashHash.hash
+    {H : Type} (_ : core.hash.Hasher H) (s : String) (state : H) : Result H :=
+  ok state

@@ -5,9 +5,18 @@
 //! `trim_matches`, `strip_prefix`) that Aeneas does not model yet.
 //! Byte-range checks stay explicit (no `RangeInclusive::contains`) for the
 //! same reason.
+//!
+//! # Verified migrate / rollback core
+//!
+//! [`plan_migrate`] / [`plan_rollback`] decide an ordered [`Plan`] of [`Op`]s.
+//! [`step`] / [`run`] interpret plans over abstract [`State`] (applied versions).
+//! The TypeDB runner executes a plan under effect axioms (see `verification/README.md`).
 
 #![allow(dead_code)]
 #![allow(clippy::manual_range_contains)]
+// Prefer explicit `match` / `Vec::new`+`push` so Charon→Aeneas extracts cleanly.
+#![allow(clippy::question_mark)]
+#![allow(clippy::vec_init_then_push)]
 
 /// Digit-only migration version string (lexicographic order = chronological timestamps).
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -517,6 +526,280 @@ fn find_label(files: &[MigrationId], v: &Version) -> Option<String> {
     None
 }
 
+// ---------------------------------------------------------------------------
+// Migrate / rollback planning + abstract ledger interpreter (verified core)
+// ---------------------------------------------------------------------------
+
+/// Migration file contents as pure data (no filesystem path).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct MigrationSpec {
+    pub version: Version,
+    pub name: String,
+    pub up: String,
+    pub down: String,
+}
+
+impl MigrationSpec {
+    pub fn label(&self) -> String {
+        let mut out = String::new();
+        out.push_str(&self.version.0);
+        out.push('_');
+        out.push_str(&self.name);
+        out
+    }
+}
+
+/// One planned schema effect (executed by the trusted TypeDB runner).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Op {
+    ApplyUp { version: Version, up: String },
+    ApplyDown { version: Version, down: String },
+}
+
+/// Ordered list of ops produced by [`plan_migrate`] / [`plan_rollback`].
+pub type Plan = Vec<Op>;
+
+/// Abstract ledger state: applied versions in application order.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct State {
+    pub applied: Vec<Version>,
+}
+
+impl State {
+    pub fn new(applied: Vec<Version>) -> Self {
+        Self { applied }
+    }
+
+    pub fn empty() -> Self {
+        Self {
+            applied: Vec::new(),
+        }
+    }
+}
+
+/// Planning errors (no I/O). Mapped to crate [`Error`](crate::Error) by the runner.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum PlanError {
+    EmptyUp(Version),
+    EmptyDown {
+        version: Version,
+        name: String,
+    },
+    MissingFile(Version),
+    StrictOrder {
+        pending: Version,
+        applied_up_to: Version,
+    },
+}
+
+/// Interpreter errors when stepping an ill-formed op (defense in depth).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum StepError {
+    EmptyUp(Version),
+    EmptyDown(Version),
+}
+
+/// True iff `s` is empty or ASCII-whitespace only (no `str::trim`).
+pub fn body_is_empty(s: &str) -> bool {
+    let bytes = s.as_bytes();
+    let mut i = 0;
+    while i < bytes.len() {
+        if !is_ascii_ws(bytes[i]) {
+            return false;
+        }
+        i += 1;
+    }
+    true
+}
+
+fn find_spec<'a>(files: &'a [MigrationSpec], v: &Version) -> Option<&'a MigrationSpec> {
+    let mut i = 0;
+    while i < files.len() {
+        if &files[i].version == v {
+            return Some(&files[i]);
+        }
+        i += 1;
+    }
+    None
+}
+
+/// Plan pending ups: files not in `applied`, in file order (caller sorts files).
+///
+/// Rejects empty `up` bodies. When `strict`, rejects pending versions `< max(applied)`.
+pub fn plan_migrate(
+    files: &[MigrationSpec],
+    applied: &[Version],
+    strict: bool,
+) -> Result<Plan, PlanError> {
+    if strict {
+        match check_strict_order_specs(files, applied) {
+            Ok(()) => {}
+            Err(StrictOrderError::OutOfOrder {
+                pending,
+                applied_up_to,
+            }) => {
+                return Err(PlanError::StrictOrder {
+                    pending,
+                    applied_up_to,
+                });
+            }
+        }
+    }
+    let mut plan: Plan = Vec::new();
+    let mut i = 0;
+    while i < files.len() {
+        let f = &files[i];
+        if !version_in(applied, &f.version) {
+            if body_is_empty(&f.up) {
+                return Err(PlanError::EmptyUp(f.version.clone()));
+            }
+            plan.push(Op::ApplyUp {
+                version: f.version.clone(),
+                up: f.up.clone(),
+            });
+        }
+        i += 1;
+    }
+    Ok(plan)
+}
+
+/// Plan a single down for the last applied version (or empty plan if none applied).
+///
+/// Rejects missing migration file and empty `down` body.
+pub fn plan_rollback(files: &[MigrationSpec], applied: &[Version]) -> Result<Plan, PlanError> {
+    if applied.is_empty() {
+        return Ok(Vec::new());
+    }
+    let version = applied[applied.len() - 1].clone();
+    let m = match find_spec(files, &version) {
+        Some(m) => m,
+        None => return Err(PlanError::MissingFile(version)),
+    };
+    if body_is_empty(&m.down) {
+        return Err(PlanError::EmptyDown {
+            version: m.version.clone(),
+            name: m.name.clone(),
+        });
+    }
+    let mut plan: Plan = Vec::new();
+    plan.push(Op::ApplyDown {
+        version: m.version.clone(),
+        down: m.down.clone(),
+    });
+    Ok(plan)
+}
+
+/// Optional status planning: classify each file (same as [`status_rows`] on ids).
+pub fn plan_status(
+    files: &[MigrationSpec],
+    applied: &[Version],
+) -> Vec<(MigrationSpec, MigrationStatus)> {
+    let mut out = Vec::new();
+    let mut i = 0;
+    while i < files.len() {
+        let f = files[i].clone();
+        let status = if version_in(applied, &f.version) {
+            MigrationStatus::Applied
+        } else {
+            MigrationStatus::Pending
+        };
+        out.push((f, status));
+        i += 1;
+    }
+    out
+}
+
+fn check_strict_order_specs(
+    files: &[MigrationSpec],
+    applied: &[Version],
+) -> Result<(), StrictOrderError> {
+    let max = match max_version(applied) {
+        Some(m) => m,
+        None => return Ok(()),
+    };
+    let mut i = 0;
+    while i < files.len() {
+        let pending = files[i].version.clone();
+        if !version_in(applied, &pending) && str_lt(pending.as_str(), max.as_str()) {
+            return Err(StrictOrderError::OutOfOrder {
+                pending,
+                applied_up_to: max,
+            });
+        }
+        i += 1;
+    }
+    Ok(())
+}
+
+/// Apply one op to abstract state: `ApplyUp` appends; `ApplyDown` removes last match.
+pub fn step(state: &State, op: &Op) -> Result<State, StepError> {
+    match op {
+        Op::ApplyUp { version, up } => {
+            if body_is_empty(up) {
+                return Err(StepError::EmptyUp(version.clone()));
+            }
+            let mut applied = clone_versions(&state.applied);
+            applied.push(version.clone());
+            Ok(State { applied })
+        }
+        Op::ApplyDown { version, down } => {
+            if body_is_empty(down) {
+                return Err(StepError::EmptyDown(version.clone()));
+            }
+            let applied = remove_last_matching(&state.applied, version);
+            Ok(State { applied })
+        }
+    }
+}
+
+fn clone_versions(vs: &[Version]) -> Vec<Version> {
+    let mut out = Vec::new();
+    let mut i = 0;
+    while i < vs.len() {
+        out.push(vs[i].clone());
+        i += 1;
+    }
+    out
+}
+
+/// Remove the last occurrence of `v` in `applied` (no-op if absent).
+fn remove_last_matching(applied: &[Version], v: &Version) -> Vec<Version> {
+    let mut last = None::<usize>;
+    let mut i = 0;
+    while i < applied.len() {
+        if &applied[i] == v {
+            last = Some(i);
+        }
+        i += 1;
+    }
+    let mut out = Vec::new();
+    i = 0;
+    while i < applied.len() {
+        match last {
+            Some(j) if i == j => {}
+            _ => out.push(applied[i].clone()),
+        }
+        i += 1;
+    }
+    out
+}
+
+/// Run a plan left-to-right; stop on the first [`StepError`].
+pub fn run(state: &State, plan: &[Op]) -> Result<State, StepError> {
+    let mut s = State {
+        applied: clone_versions(&state.applied),
+    };
+    let mut i = 0;
+    while i < plan.len() {
+        match step(&s, &plan[i]) {
+            Ok(next) => s = next,
+            Err(e) => return Err(e),
+        }
+        i += 1;
+    }
+    Ok(s)
+}
+
 /// Strip leading blank / comment lines from a dump (load preamble).
 pub fn strip_dump_header(text: &str) -> String {
     let mut started = false;
@@ -614,5 +897,110 @@ mod tests {
             strip_dump_header(&format!("{h}define\n  entity x;\n")),
             "define\n  entity x;"
         );
+    }
+
+    fn spec(version: &str, up: &str, down: &str) -> MigrationSpec {
+        MigrationSpec {
+            version: Version::new(version),
+            name: version.into(),
+            up: up.into(),
+            down: down.into(),
+        }
+    }
+
+    #[test]
+    fn plan_migrate_pending_and_idempotent() {
+        let files = vec![
+            spec("1", "u1", "d1"),
+            spec("2", "u2", "d2"),
+            spec("3", "u3", "d3"),
+        ];
+        let applied = [Version::new("1")];
+        let plan = plan_migrate(&files, &applied, false).unwrap();
+        assert_eq!(plan.len(), 2);
+        assert!(matches!(&plan[0], Op::ApplyUp { version, .. } if version.as_str() == "2"));
+        assert!(matches!(&plan[1], Op::ApplyUp { version, .. } if version.as_str() == "3"));
+
+        let state = State::new(applied.to_vec());
+        let next = run(&state, &plan).unwrap();
+        assert_eq!(
+            next.applied,
+            vec![Version::new("1"), Version::new("2"), Version::new("3")]
+        );
+
+        let again = plan_migrate(&files, &next.applied, false).unwrap();
+        assert!(again.is_empty());
+        assert_eq!(run(&next, &again).unwrap(), next);
+    }
+
+    #[test]
+    fn plan_migrate_rejects_empty_up_and_strict() {
+        let files = vec![spec("1", "u1", "d1"), spec("2", "", "d2")];
+        assert!(matches!(
+            plan_migrate(&files, &[], false),
+            Err(PlanError::EmptyUp(v)) if v.as_str() == "2"
+        ));
+
+        let files = vec![
+            spec("1", "u1", "d1"),
+            spec("2", "u2", "d2"),
+            spec("3", "u3", "d3"),
+        ];
+        let applied = [Version::new("1"), Version::new("3")];
+        assert!(matches!(
+            plan_migrate(&files, &applied, true),
+            Err(PlanError::StrictOrder { pending, applied_up_to })
+                if pending.as_str() == "2" && applied_up_to.as_str() == "3"
+        ));
+    }
+
+    #[test]
+    fn plan_rollback_inverse_and_edge_cases() {
+        let files = vec![spec("1", "u1", "d1"), spec("2", "u2", "d2")];
+        let state0 = State::empty();
+        let up = plan_migrate(&files, &state0.applied, false).unwrap();
+        let state1 = run(&state0, &up[..1]).unwrap();
+        assert_eq!(state1.applied, vec![Version::new("1")]);
+
+        let down = plan_rollback(&files, &state1.applied).unwrap();
+        assert_eq!(down.len(), 1);
+        let back = run(&state1, &down).unwrap();
+        assert_eq!(back.applied, state0.applied);
+
+        assert!(plan_rollback(&files, &[]).unwrap().is_empty());
+        assert!(matches!(
+            plan_rollback(&[], &[Version::new("9")]),
+            Err(PlanError::MissingFile(v)) if v.as_str() == "9"
+        ));
+        let empty_down = vec![spec("1", "u1", "")];
+        assert!(matches!(
+            plan_rollback(&empty_down, &[Version::new("1")]),
+            Err(PlanError::EmptyDown { version, .. }) if version.as_str() == "1"
+        ));
+    }
+
+    #[test]
+    fn step_rejects_empty_bodies() {
+        let s = State::empty();
+        assert!(matches!(
+            step(
+                &s,
+                &Op::ApplyUp {
+                    version: Version::new("1"),
+                    up: "  \n".into(),
+                }
+            ),
+            Err(StepError::EmptyUp(_))
+        ));
+        assert!(matches!(
+            step(
+                &s,
+                &Op::ApplyDown {
+                    version: Version::new("1"),
+                    down: "".into(),
+                }
+            ),
+            Err(StepError::EmptyDown(_))
+        ));
     }
 }

@@ -1,2 +1,6 @@
+import TqlmateExtract.Types
+import TqlmateExtract.FunsExternal
+import TqlmateExtract.Funs
 import TqlmateExtract.Spec
 import TqlmateExtract.Properties
+import TqlmateExtract.ExtrProperties

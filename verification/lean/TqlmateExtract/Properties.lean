@@ -1,13 +1,13 @@
 import TqlmateExtract.Spec
 
 /-!
-# Spec properties (not Aeneas `Funs.lean`)
+# Spec properties (readable twin of the extract)
 
-These theorems are about `TqlmateExtract.Spec`, a Lean model of `src/pure.rs`.
-CI `lake build` checks this file; it does **not** import `aeneas-generated/Funs.lean`.
+These theorems are about `TqlmateExtract.Spec`. The CI-critical proofs about the
+**Aeneas extract** live in `ExtrProperties.lean` (same concrete fixtures).
 
-Concrete `native_decide` examples below must stay in lockstep with
-`tests/spec_parity.rs` in the Rust crate.
+Keep these `native_decide` examples in lockstep with `tests/spec_parity.rs` and
+`ExtrProperties.lean`.
 -/
 namespace TqlmateExtract.Properties
 

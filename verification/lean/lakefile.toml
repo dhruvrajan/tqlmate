@@ -2,10 +2,23 @@ name = "tqlmate_verify"
 version = "0.1.0"
 defaultTargets = ["TqlmateExtract"]
 
-# Spec/Properties only — self-contained Lean 4 (no Mathlib / Aeneas package).
-# `lake build` does NOT import `aeneas-generated/Funs.lean` (offline extract artefact;
-# regenerate with `verification/scripts/extract-aeneas.sh`). See verification/README.md.
+# Aeneas Lean stdlib (pulls Mathlib). Pin must match verification/VERSIONS.
+[[require]]
+name = "aeneas"
+git = "https://github.com/AeneasVerif/aeneas"
+rev = "33e3b2b4a5b7fa734fe8bb1282ebad066b38d049"
+subDir = "backends/lean"
 
 [[lean_lib]]
 name = "TqlmateExtract"
-globs = ["TqlmateExtract", "TqlmateExtract.Spec", "TqlmateExtract.Properties"]
+# Importing Funs means deleting `aeneas-generated/Funs.lean` (symlinked as
+# `TqlmateExtract/Funs.lean`) breaks `lake build`.
+globs = [
+  "TqlmateExtract",
+  "TqlmateExtract.Types",
+  "TqlmateExtract.FunsExternal",
+  "TqlmateExtract.Funs",
+  "TqlmateExtract.Spec",
+  "TqlmateExtract.Properties",
+  "TqlmateExtract.ExtrProperties",
+]

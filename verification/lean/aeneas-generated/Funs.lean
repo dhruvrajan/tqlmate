@@ -18,7 +18,6 @@ set_option maxHeartbeats 1000000
 set_option maxRecDepth 2048
 
 /- You can remove the following line by using the CLI option `-all-computable`: -/
-noncomputable section
 
 namespace tqlmate_extract
 
@@ -45,8 +44,8 @@ def Str.Insts.CoreCmpPartialEqStr : core.cmp.PartialEq Str Str := {
 impl_def Str.Insts.CoreCmpPartialOrdStr : core.cmp.PartialOrd Str Str := {
   partialEqInst := Str.Insts.CoreCmpPartialEqStr
   partial_cmp := Str.Insts.CoreCmpPartialOrdStr.partial_cmp
-  lt := core.cmp.PartialOrd.lt.default Str.Insts.CoreCmpPartialOrdStr
-  gt := core.cmp.PartialOrd.gt.default Str.Insts.CoreCmpPartialOrdStr
+  lt := core.cmp.PartialOrd.lt.default Str.Insts.CoreCmpPartialOrdStr.partial_cmp
+  gt := core.cmp.PartialOrd.gt.default Str.Insts.CoreCmpPartialOrdStr.partial_cmp
 }
 
 /-- Trait implementation: [core::str::traits::{impl core::slice::index::SliceIndex<str, str> for core::ops::range::Range<usize>}]
@@ -218,10 +217,8 @@ impl_def pure.Version.Insts.CoreCmpPartialOrdVersion : core.cmp.PartialOrd
   pure.Version pure.Version := {
   partialEqInst := pure.Version.Insts.CoreCmpPartialEqVersion
   partial_cmp := pure.Version.Insts.CoreCmpPartialOrdVersion.partial_cmp
-  lt := core.cmp.PartialOrd.lt.default
-    pure.Version.Insts.CoreCmpPartialOrdVersion
-  gt := core.cmp.PartialOrd.gt.default
-    pure.Version.Insts.CoreCmpPartialOrdVersion
+  lt := core.cmp.PartialOrd.lt.default pure.Version.Insts.CoreCmpPartialOrdVersion.partial_cmp
+  gt := core.cmp.PartialOrd.gt.default pure.Version.Insts.CoreCmpPartialOrdVersion.partial_cmp
 }
 
 /-- Trait implementation: [tqlmate_extract::pure::{impl core::cmp::Ord for tqlmate_extract::pure::Version}]
@@ -1666,8 +1663,7 @@ def pure.max_version_loop.body
     let v ← Slice.index_usize applied i
     let v1 ← Slice.index_usize applied best
     let b ←
-      core.cmp.PartialOrd.gt.default
-        pure.Version.Insts.CoreCmpPartialOrdVersion v v1
+      core.cmp.PartialOrd.gt.default pure.Version.Insts.CoreCmpPartialOrdVersion.partial_cmp v v1
     let best1 ← if b
                   then ok i
                   else ok best

@@ -1,0 +1,10 @@
+[package]
+name = "tqlmate-extract"
+version = "0.1.0"
+edition = "2021"
+description = "Charon/Aeneas extractable surface for tqlmate pure migration logic"
+license = "MIT"
+publish = false
+
+[lib]
+path = "src/lib.rs"

@@ -9,7 +9,7 @@ repository = "https://github.com/dhruvrajan/tqlmate"
 homepage = "https://github.com/dhruvrajan/tqlmate"
 keywords = ["typedb", "migration", "typeql", "database", "cli"]
 categories = ["command-line-utilities", "database"]
-exclude = [".github/", ".env.example"]
+exclude = [".github/", ".env.example", "verification/"]
 
 [[bin]]
 name = "tqlmate"
@@ -18,7 +18,7 @@ path = "src/main.rs"
 [features]
 default = ["typedb-docker"]
 # Compiles `tests/typedb_docker.rs` (TypeDB via testcontainers). Offline unit
-# targets: `cargo test --no-default-features --test url --test migration --test ledger --test cli`.
+# targets: `cargo test --no-default-features --test url --test migration --test ledger --test cli --test spec_parity`.
 typedb-docker = []
 
 [dependencies]

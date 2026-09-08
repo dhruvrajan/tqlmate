@@ -2,7 +2,7 @@ name: ci
 
 on:
   push:
-    branches: [main]
+    branches: [main, 'cursor/**']
   pull_request:
   workflow_dispatch:
 
@@ -20,7 +20,7 @@ jobs:
       - name: Offline unit tests (no TypeDB / no Docker)
         run: >
           cargo test --no-default-features
-          --test url --test migration --test ledger --test cli
+          --test url --test migration --test ledger --test cli --test spec_parity
 
   lint:
     name: lint
@@ -55,6 +55,24 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - name: Verify the crate packages cleanly
         run: cargo publish --dry-run --locked
+
+  verify:
+    name: verify (lean)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install elan / Lean toolchain
+        run: |
+          curl https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -sSf |
+            sh -s -- -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+      - name: lake build (Aeneas package + aeneas-generated Funs + ExtrProperties)
+        working-directory: verification/lean
+        run: |
+          # Mathlib is pulled via the Aeneas Lean package (pin in VERSIONS).
+          lake update
+          lake exe cache get || true
+          lake build
 
   rust-build:
     needs: unit

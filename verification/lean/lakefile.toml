@@ -1,0 +1,22 @@
+name = "tqlmate_verify"
+version = "0.1.0"
+defaultTargets = ["TqlmateExtract"]
+
+# Aeneas Lean stdlib (pulls Mathlib). Pin must match verification/VERSIONS.
+[[require]]
+name = "aeneas"
+git = "https://github.com/AeneasVerif/aeneas"
+rev = "33e3b2b4a5b7fa734fe8bb1282ebad066b38d049"
+subDir = "backends/lean"
+
+[[lean_lib]]
+name = "TqlmateExtract"
+# Importing Funs means deleting `aeneas-generated/Funs.lean` (symlinked as
+# `TqlmateExtract/Funs.lean`) breaks `lake build`.
+globs = [
+  "TqlmateExtract",
+  "TqlmateExtract.Types",
+  "TqlmateExtract.FunsExternal",
+  "TqlmateExtract.Funs",
+  "TqlmateExtract.ExtrProperties",
+]

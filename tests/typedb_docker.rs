@@ -15,7 +15,7 @@ use testcontainers::core::{IntoContainerPort, WaitFor};
 use testcontainers::runners::AsyncRunner;
 use testcontainers::{ContainerAsync, GenericImage, ImageExt};
 use tokio::sync::OnceCell;
-use tqlmate::{Opts, Runner, TypeDbUrl};
+use tqlmate::{bootstrap_schema, Opts, Runner, TypeDbUrl, ENTITY};
 
 const TYPEDB_IMAGE: &str = "typedb/typedb";
 const TYPEDB_TAG: &str = "3.12.3";
@@ -237,6 +237,69 @@ async fn up_creates_database_and_applies() {
     let _ = runner.drop().await;
     runner.up().await.expect("up");
     assert!(!runner.status(true).await.expect("status"));
+    runner.drop().await.expect("drop");
+}
+
+#[tokio::test]
+async fn ledger_ensure_on_empty_then_second_ensure_noop() {
+    let typedb = shared_typedb().await;
+    let url = typedb.url_for(&unique_db("tqlmate_ledger"));
+    let tmp = tempfile::tempdir().unwrap();
+    let migrations = tmp.path().join("migrations");
+    let schema = tmp.path().join("schema.tql");
+    std::fs::create_dir_all(&migrations).unwrap();
+
+    let mut runner = Runner::new(opts(url, migrations, schema.clone()));
+    let _ = runner.drop().await;
+    runner.create().await.expect("create");
+
+    // ensure via migrate with no user migrations
+    runner.migrate().await.expect("first ensure via migrate");
+    runner.dump().await.expect("dump after ensure");
+    let dump = std::fs::read_to_string(&schema).expect("read dump");
+    assert!(
+        dump.contains(ENTITY),
+        "ledger entity missing after ensure: {dump}"
+    );
+    assert!(
+        !dump.contains("00000000000001"),
+        "ledger versions must not appear as user applied migrations: {dump}"
+    );
+
+    // Second ensure (migrate again) is a no-op
+    runner.migrate().await.expect("second ensure no-op");
+    runner.dump().await.expect("dump after second ensure");
+    let dump2 = std::fs::read_to_string(&schema).expect("read dump2");
+    assert!(dump2.contains(ENTITY));
+
+    runner.drop().await.expect("drop");
+}
+
+#[tokio::test]
+async fn ledger_ensure_stamps_legacy_bootstrap_then_accepts_user_migrate() {
+    let typedb = shared_typedb().await;
+    let db = unique_db("tqlmate_legacy");
+    let url = typedb.url_for(&db);
+    let tmp = tempfile::tempdir().unwrap();
+    let migrations = tmp.path().join("migrations");
+    let schema = tmp.path().join("schema.tql");
+    std::fs::create_dir_all(&migrations).unwrap();
+
+    // Simulate pre-migration bootstrap: define ledger types without recording a version.
+    std::fs::write(&schema, format!("{}\n", bootstrap_schema())).unwrap();
+    let mut runner = Runner::new(opts(url, migrations.clone(), schema));
+    let _ = runner.drop().await;
+    runner.load().await.expect("load legacy bootstrap");
+
+    write_migration(
+        &migrations,
+        "20240101000000_thing.tql",
+        "-- migrate:up\ndefine\n  entity thing;\n\n-- migrate:down\nundefine\n  thing;\n",
+    );
+    // ensure should stamp ledger_init, then apply the user migration
+    runner.migrate().await.expect("migrate after legacy stamp");
+    assert!(!runner.status(true).await.expect("status"));
+
     runner.drop().await.expect("drop");
 }
 

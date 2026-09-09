@@ -19,8 +19,13 @@ pub use migration::{
     parse_migration, parse_migration_body, parse_version_name, slugify, status_rows, MigrationFile,
     MigrationStatus, Version,
 };
+pub use pure::{
+    body_is_empty, pending_specs, plan_migrate, plan_rollback, plan_status, run, step,
+    MigrationSpec, Op, Plan, PlanError, State, StepError,
+};
 pub use runner::{
-    default_migrations_dir, default_schema_file, resolve_url, resolve_url_from, Opts, Runner,
+    abstract_run, default_migrations_dir, default_schema_file, plan_migrate_files,
+    plan_rollback_files, resolve_url, resolve_url_from, Opts, Runner,
 };
 pub use url::{TypeDbUrl, DEFAULT_PASSWORD, DEFAULT_USERNAME};
 

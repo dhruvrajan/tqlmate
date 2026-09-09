@@ -91,8 +91,8 @@ Each up/down runs in one **SCHEMA** transaction together with the ledger write (
   These must not open TypeDB or Docker. `spec_parity` locks Lean ExtrProperties fixtures to `src/pure.rs` outputs.
 - **Formal verification** ([`verification/`](verification/)): Charon+Aeneas extract
   [`src/pure.rs`](src/pure.rs) → `verification/lean/aeneas-generated/`. CI `lake build`
-  depends on the Aeneas Lean package and elaborates that extract, proving key properties
-  on the **extracted** functions (`ExtrProperties`, Lean **v4.31.0**).
+  proves migrate/rollback **plan + interpreter** (`CoreProperties`) under TypeDB effect
+  assumptions, plus parse fixtures (`ExtrProperties`, Lean **v4.31.0**).
   Release binaries do not need Lean/Charon/Aeneas. See [`verification/README.md`](verification/README.md).
 - **Integration** (`tests/typedb_docker.rs` only, feature `typedb-docker`, on by default): TypeDB via [testcontainers](https://testcontainers.com/) (`typedb/typedb:3.12.3`). Requires Docker; fails loudly if unavailable (no silent skip).
 - CI (`.github/workflows/ci.yml`, GitHub-hosted runners): jobs `unit` → `integration`, plus parallel `lint`, `verify` (Lean), and `package` (`cargo publish --dry-run`).

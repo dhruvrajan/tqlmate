@@ -107,7 +107,7 @@ fn lean_core_plan_and_run() {
     ];
     let plan = plan_migrate(&files, &[Version::new("1")], false).unwrap();
     assert_eq!(plan.len(), 2);
-    let next = run(&State::new(vec![Version::new("1")]), &plan).unwrap();
+    let next = run(State::new(vec![Version::new("1")]), &plan).unwrap();
     assert_eq!(
         next.applied,
         vec![Version::new("1"), Version::new("2"), Version::new("3")]
@@ -131,20 +131,20 @@ fn lean_core_plan_and_run() {
     ));
 
     let s1 = step(
-        &State::empty(),
-        &Op::ApplyUp {
+        State::empty(),
+        Op::ApplyUp {
             version: Version::new("1"),
             up: "u1".into(),
         },
     )
     .unwrap();
     let down = plan_rollback(&files, &s1.applied).unwrap();
-    assert_eq!(run(&s1, &down).unwrap().applied, Vec::<Version>::new());
+    assert_eq!(run(s1, &down).unwrap().applied, Vec::<Version>::new());
 
     assert!(matches!(
         step(
-            &State::empty(),
-            &Op::ApplyUp {
+            State::empty(),
+            Op::ApplyUp {
                 version: Version::new("1"),
                 up: "".into(),
             }

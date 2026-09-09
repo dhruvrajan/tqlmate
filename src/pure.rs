@@ -623,6 +623,109 @@ fn find_spec<'a>(files: &'a [MigrationSpec], v: &Version) -> Option<&'a Migratio
     None
 }
 
+/// Apply one op to abstract state: `ApplyUp` appends; `ApplyDown` removes last match.
+///
+/// Takes ownership so successful `ApplyUp` is a pure `Vec::push` (no clone loop).
+pub fn step(state: State, op: Op) -> Result<State, StepError> {
+    match op {
+        Op::ApplyUp { version, up } => {
+            if body_is_empty(&up) {
+                return Err(StepError::EmptyUp(version));
+            }
+            let mut applied = state.applied;
+            applied.push(version);
+            Ok(State { applied })
+        }
+        Op::ApplyDown { version, down } => {
+            if body_is_empty(&down) {
+                return Err(StepError::EmptyDown(version));
+            }
+            let applied = remove_last_matching(&state.applied, &version);
+            Ok(State { applied })
+        }
+    }
+}
+
+/// Clone `applied[0..n]` (stops at `applied.len()` if `n` is larger).
+fn prefix_clone(applied: &[Version], n: usize) -> Vec<Version> {
+    let mut out = Vec::new();
+    let mut i = 0;
+    while i < n && i < applied.len() {
+        out.push(applied[i].clone());
+        i += 1;
+    }
+    out
+}
+
+/// Remove the last occurrence of `v` in `applied` (unchanged if absent).
+///
+/// Recurses from the end so Aeneas extracts a `partial_fixpoint` that admits
+/// induction: if the last element equals `v`, return the prefix; otherwise
+/// recurse on the prefix and push the last element back.
+pub fn remove_last_matching(applied: &[Version], v: &Version) -> Vec<Version> {
+    if applied.is_empty() {
+        return Vec::new();
+    }
+    let last_i = applied.len() - 1;
+    if &applied[last_i] == v {
+        prefix_clone(applied, last_i)
+    } else {
+        let mut out = remove_last_matching(&applied[..last_i], v);
+        out.push(applied[last_i].clone());
+        out
+    }
+}
+
+/// Run a plan left-to-right (recursive fold — extracts as `partial_fixpoint`).
+///
+/// `run(s, []) = Ok(s)`; `run(s, op::rest) = step(s, op).and_then(|s'| run(s', rest))`.
+pub fn run(state: State, plan: &[Op]) -> Result<State, StepError> {
+    if plan.is_empty() {
+        Ok(state)
+    } else {
+        let next = match step(state, plan[0].clone()) {
+            Ok(s) => s,
+            Err(e) => return Err(e),
+        };
+        run(next, &plan[1..])
+    }
+}
+
+/// Pending specs among `files` (not in `applied`), preserving file order.
+///
+/// Clone-before-check so Aeneas can match borrow contexts.
+pub fn pending_specs(files: &[MigrationSpec], applied: &[Version]) -> Vec<MigrationSpec> {
+    let mut out = Vec::new();
+    let mut i = 0;
+    while i < files.len() {
+        let f = files[i].clone();
+        let is_pending = !version_in(applied, &f.version);
+        if is_pending {
+            out.push(f);
+        }
+        i += 1;
+    }
+    out
+}
+
+/// Build ApplyUp ops from pending specs; reject empty ups.
+fn plan_ups_from_pending(pending: &[MigrationSpec]) -> Result<Plan, PlanError> {
+    let mut plan: Plan = Vec::new();
+    let mut i = 0;
+    while i < pending.len() {
+        let f = &pending[i];
+        if body_is_empty(&f.up) {
+            return Err(PlanError::EmptyUp(f.version.clone()));
+        }
+        plan.push(Op::ApplyUp {
+            version: f.version.clone(),
+            up: f.up.clone(),
+        });
+        i += 1;
+    }
+    Ok(plan)
+}
+
 /// Plan pending ups: files not in `applied`, in file order (caller sorts files).
 ///
 /// Rejects empty `up` bodies. When `strict`, rejects pending versions `< max(applied)`.
@@ -645,22 +748,8 @@ pub fn plan_migrate(
             }
         }
     }
-    let mut plan: Plan = Vec::new();
-    let mut i = 0;
-    while i < files.len() {
-        let f = &files[i];
-        if !version_in(applied, &f.version) {
-            if body_is_empty(&f.up) {
-                return Err(PlanError::EmptyUp(f.version.clone()));
-            }
-            plan.push(Op::ApplyUp {
-                version: f.version.clone(),
-                up: f.up.clone(),
-            });
-        }
-        i += 1;
-    }
-    Ok(plan)
+    let pending = pending_specs(files, applied);
+    plan_ups_from_pending(&pending)
 }
 
 /// Plan a single down for the last applied version (or empty plan if none applied).
@@ -729,75 +818,6 @@ fn check_strict_order_specs(
         i += 1;
     }
     Ok(())
-}
-
-/// Apply one op to abstract state: `ApplyUp` appends; `ApplyDown` removes last match.
-pub fn step(state: &State, op: &Op) -> Result<State, StepError> {
-    match op {
-        Op::ApplyUp { version, up } => {
-            if body_is_empty(up) {
-                return Err(StepError::EmptyUp(version.clone()));
-            }
-            let mut applied = clone_versions(&state.applied);
-            applied.push(version.clone());
-            Ok(State { applied })
-        }
-        Op::ApplyDown { version, down } => {
-            if body_is_empty(down) {
-                return Err(StepError::EmptyDown(version.clone()));
-            }
-            let applied = remove_last_matching(&state.applied, version);
-            Ok(State { applied })
-        }
-    }
-}
-
-fn clone_versions(vs: &[Version]) -> Vec<Version> {
-    let mut out = Vec::new();
-    let mut i = 0;
-    while i < vs.len() {
-        out.push(vs[i].clone());
-        i += 1;
-    }
-    out
-}
-
-/// Remove the last occurrence of `v` in `applied` (no-op if absent).
-fn remove_last_matching(applied: &[Version], v: &Version) -> Vec<Version> {
-    let mut last = None::<usize>;
-    let mut i = 0;
-    while i < applied.len() {
-        if &applied[i] == v {
-            last = Some(i);
-        }
-        i += 1;
-    }
-    let mut out = Vec::new();
-    i = 0;
-    while i < applied.len() {
-        match last {
-            Some(j) if i == j => {}
-            _ => out.push(applied[i].clone()),
-        }
-        i += 1;
-    }
-    out
-}
-
-/// Run a plan left-to-right; stop on the first [`StepError`].
-pub fn run(state: &State, plan: &[Op]) -> Result<State, StepError> {
-    let mut s = State {
-        applied: clone_versions(&state.applied),
-    };
-    let mut i = 0;
-    while i < plan.len() {
-        match step(&s, &plan[i]) {
-            Ok(next) => s = next,
-            Err(e) => return Err(e),
-        }
-        i += 1;
-    }
-    Ok(s)
 }
 
 /// Strip leading blank / comment lines from a dump (load preamble).
@@ -922,7 +942,7 @@ mod tests {
         assert!(matches!(&plan[1], Op::ApplyUp { version, .. } if version.as_str() == "3"));
 
         let state = State::new(applied.to_vec());
-        let next = run(&state, &plan).unwrap();
+        let next = run(state, &plan).unwrap();
         assert_eq!(
             next.applied,
             vec![Version::new("1"), Version::new("2"), Version::new("3")]
@@ -930,7 +950,7 @@ mod tests {
 
         let again = plan_migrate(&files, &next.applied, false).unwrap();
         assert!(again.is_empty());
-        assert_eq!(run(&next, &again).unwrap(), next);
+        assert_eq!(run(next.clone(), &again).unwrap(), next);
     }
 
     #[test]
@@ -959,12 +979,12 @@ mod tests {
         let files = vec![spec("1", "u1", "d1"), spec("2", "u2", "d2")];
         let state0 = State::empty();
         let up = plan_migrate(&files, &state0.applied, false).unwrap();
-        let state1 = run(&state0, &up[..1]).unwrap();
+        let state1 = run(state0.clone(), &up[..1]).unwrap();
         assert_eq!(state1.applied, vec![Version::new("1")]);
 
         let down = plan_rollback(&files, &state1.applied).unwrap();
         assert_eq!(down.len(), 1);
-        let back = run(&state1, &down).unwrap();
+        let back = run(state1, &down).unwrap();
         assert_eq!(back.applied, state0.applied);
 
         assert!(plan_rollback(&files, &[]).unwrap().is_empty());
@@ -980,12 +1000,26 @@ mod tests {
     }
 
     #[test]
+    fn remove_last_matching_drops_last_occurrence() {
+        let a = |s: &str| Version::new(s);
+        assert_eq!(remove_last_matching(&[], &a("1")), vec![]);
+        assert_eq!(remove_last_matching(&[a("1")], &a("1")), vec![]);
+        assert_eq!(
+            remove_last_matching(&[a("1"), a("2"), a("1")], &a("1")),
+            vec![a("1"), a("2")]
+        );
+        assert_eq!(
+            remove_last_matching(&[a("1"), a("2")], &a("9")),
+            vec![a("1"), a("2")]
+        );
+    }
+
+    #[test]
     fn step_rejects_empty_bodies() {
-        let s = State::empty();
         assert!(matches!(
             step(
-                &s,
-                &Op::ApplyUp {
+                State::empty(),
+                Op::ApplyUp {
                     version: Version::new("1"),
                     up: "  \n".into(),
                 }
@@ -994,8 +1028,8 @@ mod tests {
         ));
         assert!(matches!(
             step(
-                &s,
-                &Op::ApplyDown {
+                State::empty(),
+                Op::ApplyDown {
                     version: Version::new("1"),
                     down: "".into(),
                 }

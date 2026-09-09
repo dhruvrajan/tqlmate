@@ -379,7 +379,7 @@ async fn execute_plan(
 /// Abstract post-state after a successful plan (for tests / mental model).
 pub fn abstract_run(applied: &[Version], plan: &[Op]) -> Result<State> {
     let state = State::new(applied.to_vec());
-    pure::run(&state, plan).map_err(|e| match e {
+    pure::run(state, plan).map_err(|e| match e {
         pure::StepError::EmptyUp(v) => Error::EmptyUp(v),
         pure::StepError::EmptyDown(v) => Error::EmptyDown {
             version: v,

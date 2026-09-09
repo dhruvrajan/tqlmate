@@ -18,20 +18,20 @@ set_option maxRecDepth 2048
 namespace tqlmate_extract
 
 /-- [tqlmate_extract::pure::Version]
-    Source: 'src/../../../src/pure.rs', lines 14:0-14:31
+    Source: 'src/../../../src/pure.rs', lines 23:0-23:31
     Visibility: public -/
 @[reducible]
 def pure.Version := String
 
 /-- [tqlmate_extract::pure::MigrationId]
-    Source: 'src/../../../src/pure.rs', lines 28:0-31:1
+    Source: 'src/../../../src/pure.rs', lines 37:0-40:1
     Visibility: public -/
 structure pure.MigrationId where
   version : pure.Version
   «name» : String
 
 /-- [tqlmate_extract::pure::MigrationStatus]
-    Source: 'src/../../../src/pure.rs', lines 44:0-47:1
+    Source: 'src/../../../src/pure.rs', lines 53:0-56:1
     Visibility: public -/
 @[discriminant isize]
 inductive pure.MigrationStatus where
@@ -39,7 +39,7 @@ inductive pure.MigrationStatus where
 | Pending : pure.MigrationStatus
 
 /-- [tqlmate_extract::pure::ParseError]
-    Source: 'src/../../../src/pure.rs', lines 50:0-56:1
+    Source: 'src/../../../src/pure.rs', lines 59:0-65:1
     Visibility: public -/
 @[discriminant isize]
 inductive pure.ParseError where
@@ -50,21 +50,21 @@ inductive pure.ParseError where
 | Markers : pure.ParseError
 
 /-- [tqlmate_extract::pure::StrictOrderError]
-    Source: 'src/../../../src/pure.rs', lines 59:0-64:1
+    Source: 'src/../../../src/pure.rs', lines 68:0-73:1
     Visibility: public -/
 @[discriminant isize]
 inductive pure.StrictOrderError where
 | OutOfOrder : pure.Version → pure.Version → pure.StrictOrderError
 
 /-- [tqlmate_extract::pure::Section]
-    Source: 'src/../../../src/pure.rs', lines 67:0-70:1 -/
+    Source: 'src/../../../src/pure.rs', lines 76:0-79:1 -/
 @[discriminant isize]
 inductive pure.Section where
 | Up : pure.Section
 | Down : pure.Section
 
 /-- [tqlmate_extract::pure::MigrationSpec]
-    Source: 'src/../../../src/pure.rs', lines 526:0-531:1
+    Source: 'src/../../../src/pure.rs', lines 535:0-540:1
     Visibility: public -/
 structure pure.MigrationSpec where
   version : pure.Version
@@ -73,7 +73,7 @@ structure pure.MigrationSpec where
   down : String
 
 /-- [tqlmate_extract::pure::Op]
-    Source: 'src/../../../src/pure.rs', lines 545:0-548:1
+    Source: 'src/../../../src/pure.rs', lines 554:0-557:1
     Visibility: public -/
 @[discriminant isize]
 inductive pure.Op where
@@ -81,13 +81,13 @@ inductive pure.Op where
 | ApplyDown : pure.Version → String → pure.Op
 
 /-- [tqlmate_extract::pure::State]
-    Source: 'src/../../../src/pure.rs', lines 555:0-557:1
+    Source: 'src/../../../src/pure.rs', lines 564:0-566:1
     Visibility: public -/
 structure pure.State where
   applied : alloc.vec.Vec pure.Version
 
 /-- [tqlmate_extract::pure::PlanError]
-    Source: 'src/../../../src/pure.rs', lines 573:0-578:1
+    Source: 'src/../../../src/pure.rs', lines 582:0-593:1
     Visibility: public -/
 @[discriminant isize]
 inductive pure.PlanError where
@@ -97,7 +97,7 @@ inductive pure.PlanError where
 | StrictOrder : pure.Version → pure.Version → pure.PlanError
 
 /-- [tqlmate_extract::pure::StepError]
-    Source: 'src/../../../src/pure.rs', lines 582:0-585:1
+    Source: 'src/../../../src/pure.rs', lines 597:0-600:1
     Visibility: public -/
 @[discriminant isize]
 inductive pure.StepError where

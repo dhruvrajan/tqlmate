@@ -5,28 +5,47 @@ Machine-checked properties of the **extracted** pure core (`src/pure.rs`) used b
 
 **Rust → Charon → Aeneas → ExtrProperties + CoreProperties**
 
-## What is 100% verified (pure plan + interpreter)
+## What is verified (pure plan + interpreter)
 
 [`lean/TqlmateExtract/CoreProperties.lean`](lean/TqlmateExtract/CoreProperties.lean)
-proves properties of the extracted migrate/rollback **decision** core:
+proves properties of the extracted migrate/rollback **decision** core.
 
-| Property | Where |
+### ∀ / inductive theorems (on the extract)
+
+| Claim | Theorem |
 | --- | --- |
-| Migrate pending → `run` appends pending in file order; applied prefix preserved | `plan_migrate_then_run_applies_pending`, `run_pending_plan_grows_applied`, `migrate_preserves_applied_prefix` |
-| Idempotent migrate (nothing pending ⇒ empty plan / unchanged) | `plan_migrate_idempotent_when_applied`, `plan_migrate_empty_files`, `run_empty_plan_example` |
-| Rollback inverse of one up | `migrate_rollback_roundtrip`, `plan_rollback_after_up`, `run_up_then_down_inverse_example` |
-| Empty up/down rejected by plan (and by `step`) | `plan_migrate_rejects_empty_up`, `plan_rollback_rejects_empty_down`, `step_rejects_empty_*` |
-| Strict order: pending `< max(applied)` errors | `plan_migrate_strict_order_error`, `plan_migrate_strict_ok_prefix` |
-| Rollback missing file / empty applied | `plan_rollback_missing_file`, `plan_rollback_empty_applied_forall` (∀ files), examples |
+| `run s [] = Ok s` | `run_nil`, `run_nil_of_empty` |
+| `run s (op::rest) = step s op >>= run · rest` | `run_cons`, `run_singleton` |
+| ApplyUp nonempty ⇒ `applied' = applied ++ [v]` | `step_apply_up_ok` |
+| ApplyUp / ApplyDown empty body ⇒ Err | `step_apply_up_err`, `step_apply_down_err` |
+| ApplyDown nonempty ⇒ `remove_last_matching` | `step_apply_down_ok` |
+| `remove_last_matching [] v = []`; `[v]` match ⇒ `[]` | `remove_last_matching_nil`, `remove_last_matching_singleton` |
+| Empty applied ⇒ empty rollback (∀ files) | `plan_rollback_empty_forall` |
+| Empty pending ⇒ empty ups | `plan_ups_from_pending_nil` |
+| Nonstrict migrate = `pending_specs` ≫ `plan_ups_from_pending` | `plan_migrate_nonstrict_eq` |
+| Strict migrate maps `check_strict_order_specs` Err → `StrictOrder` | `plan_migrate_strict_maps_error` |
+| Nonempty rollback = last-version lookup / MissingFile / EmptyDown / ApplyDown | `plan_rollback_nonempty_eq` |
+| ∀ nonempty up/down: empty → ApplyUp → ApplyDown → empty | `roundtrip_up_down` |
+| One ApplyUp appends version (`run` ∘ `step`) | `run_one_apply_up_appends` |
 
-∀-style lemmas (not fixture-only) include:
+`remove_last_matching` is recursive from the end (Rust): if the last element equals
+`v`, return the prefix; otherwise recurse on the prefix and push the last element
+back (absent `v` ⇒ unchanged clone).
 
-- `plan_rollback_empty_applied_forall` — empty applied ⇒ empty plan for **any** file slice
-- `step_rejects_empty_up_forall` / `step_rejects_empty_down_forall` — empty bodies rejected for **any** state/version when `body_is_empty` holds
+### Regression fixtures (`native_decide` only)
+
+These lock concrete extract shapes; they are **not** a substitute for the ∀ table:
+
+`plan_migrate_then_run_applies_pending`, `run_pending_plan_grows_applied`,
+`plan_migrate_idempotent_when_applied`, `plan_migrate_rejects_empty_up`,
+`plan_rollback_rejects_empty_down`, `plan_migrate_strict_order_error`,
+`plan_migrate_strict_ok_prefix`, `plan_rollback_missing_file`,
+`plan_rollback_after_up`, `migrate_rollback_roundtrip`,
+`step_apply_up_example`, `step_apply_down_removes_last`, etc.
 
 Parse/split/slugify fixtures remain in
-[`ExtrProperties.lean`](lean/TqlmateExtract/ExtrProperties.lean) (`native_decide`),
-mirrored by `tests/spec_parity.rs`.
+[`ExtrProperties.lean`](lean/TqlmateExtract/ExtrProperties.lean), mirrored by
+`tests/spec_parity.rs`.
 
 ## What is assumed (effect axioms / FunsExternal / TypeDB)
 
@@ -64,7 +83,8 @@ CLI / Runner (trusted effects)
 ```
 
 Abstract interpreter: `State { applied }` with `step` / `run` over `Op`
-(`ApplyUp` / `ApplyDown`).
+(`ApplyUp` / `ApplyDown`). Proof-oriented helpers: `pending_specs`,
+`plan_ups_from_pending`, recursive `remove_last_matching`, recursive `run`.
 
 ## Pins
 

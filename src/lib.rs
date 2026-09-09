@@ -20,8 +20,8 @@ pub use migration::{
     MigrationStatus, Version,
 };
 pub use pure::{
-    body_is_empty, plan_migrate, plan_rollback, plan_status, run, step, MigrationSpec, Op, Plan,
-    PlanError, State, StepError,
+    body_is_empty, pending_specs, plan_migrate, plan_rollback, plan_status, run, step,
+    MigrationSpec, Op, Plan, PlanError, State, StepError,
 };
 pub use runner::{
     abstract_run, default_migrations_dir, default_schema_file, plan_migrate_files,

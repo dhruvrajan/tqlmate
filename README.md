@@ -89,11 +89,12 @@ Each up/down runs in one **SCHEMA** transaction together with the ledger write (
 - **Unit** (under `tests/`, next to the Docker suite): `url.rs`, `migration.rs`, `ledger.rs`, `cli.rs`, `spec_parity.rs`. Offline:
   `cargo test --no-default-features --test url --test migration --test ledger --test cli --test spec_parity`
   These must not open TypeDB or Docker. `spec_parity` locks Lean ExtrProperties fixtures to `src/pure.rs` outputs.
-- **Formal verification** ([`verification/`](verification/)): Charon+Aeneas extract
-  [`src/pure.rs`](src/pure.rs) → `verification/lean/aeneas-generated/`. CI `lake build`
-  proves migrate/rollback **plan + interpreter** (`CoreProperties`) under TypeDB effect
-  assumptions, plus parse fixtures (`ExtrProperties`, Lean **v4.31.0**).
-  Release binaries do not need Lean/Charon/Aeneas. See [`verification/README.md`](verification/README.md).
+- **Formal verification** ([`verification/`](verification/)): two CI paths under
+  TypeDB effect assumptions — **Verus** (`verification/verus`, migrate/rollback
+  `ensures` on annotated Rust) and **Aeneas→Lean** (extract of [`src/pure.rs`](src/pure.rs)
+  → `CoreProperties` / `ExtrProperties`). They coexist until Verus fully covers
+  extract fidelity + parse fixtures; see [`verification/README.md`](verification/README.md).
+  Release binaries need neither verifier.
 - **Integration** (`tests/typedb_docker.rs` only, feature `typedb-docker`, on by default): TypeDB via [testcontainers](https://testcontainers.com/) (`typedb/typedb:3.12.3`). Requires Docker; fails loudly if unavailable (no silent skip).
-- CI (`.github/workflows/ci.yml`, GitHub-hosted runners): jobs `unit` → `integration`, plus parallel `lint`, `verify` (Lean), and `package` (`cargo publish --dry-run`).
+- CI (`.github/workflows/ci.yml`, GitHub-hosted runners): jobs `unit` → `integration`, plus parallel `lint`, `verify (lean)`, `verify (verus)`, and `package` (`cargo publish --dry-run`).
 - Release: pushing a `v*` tag runs `.github/workflows/release.yml` — unit tests, then cross-platform binaries, then a GitHub Release with those archives attached and a `cargo publish` to crates.io (`CARGO_REGISTRY_TOKEN` secret). Releases are cut from GitHub only, never from a laptop.

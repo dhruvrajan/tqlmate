@@ -1,4 +1,37 @@
-# Formal verification (Lean 4 / Aeneas)
+# Formal verification
+
+Two complementary paths check the pure migrate/rollback core
+(`plan_migrate` / `plan_rollback` / `step` / `run` over abstract `State`):
+
+| Path | Location | What it checks |
+| --- | --- | --- |
+| **Verus** (preferred for core algorithm proofs) | [`verus/`](verus/) | Ensures on Verus-annotated Rust of the migrate/rollback interpreter |
+| **Aeneas → Lean** | [`lean/`](lean/) | ∀ theorems + fixtures on the **extracted** `src/pure.rs` (Charon→Aeneas) |
+
+Production CLI still runs `src/pure.rs`. TypeDB I/O stays a trusted effect
+boundary in both stories (see below).
+
+## Why both (for now)
+
+- **Verus** proves properties directly on annotated Rust (`ensures` / `decreases`),
+  with a short CI install and no Mathlib. Better day-to-day maintainability for
+  the migrate/rollback algorithm.
+- **Lean/Aeneas** ties proofs to the **exact** Charon extract of `src/pure.rs`
+  (including parse/split fixtures in `ExtrProperties`) and already has a broad
+  ∀ table in `CoreProperties`.
+
+**Retire Aeneas only when** Verus coverage is equal-or-better **and** either
+(1) production `src/pure.rs` is itself Verus-verified, or (2) a parity harness
+locks Verus ↔ `pure.rs` semantics for every CoreProperties claim **and**
+ExtrProperties-class parse/split proofs move elsewhere. Until then, **coexist**:
+CI runs both `verify (verus)` and `verify (lean)`.
+
+Choose Verus when iterating on migrate/rollback proofs; keep Lean green when
+changing `src/pure.rs` extract shape or parse helpers.
+
+---
+
+# Aeneas → Lean
 
 Machine-checked properties of the **extracted** pure core (`src/pure.rs`) used by
 `src/migration.rs` / `src/runner.rs`. Story:
@@ -106,3 +139,13 @@ cd verification/lean && lake update && lake exe cache get && lake build
 ```
 
 Re-check `ExtrProperties.lean` / `CoreProperties.lean` if the extract shape changes.
+
+---
+
+# Verus
+
+See [`verus/README.md`](verus/README.md). Local check:
+
+```bash
+./verification/scripts/verify-verus.sh
+```

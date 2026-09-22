@@ -1,0 +1,12 @@
+[package]
+name = "tqlmate-verus-core"
+version = "0.1.0"
+edition = "2021"
+description = "Verus-annotated migrate/rollback core (verified with `verus`, not cargo build)"
+license = "MIT"
+publish = false
+
+# This package is verified with the Verus binary (`./verification/scripts/verify-verus.sh`),
+# not `cargo build`. No crates.io deps: Verus supplies `vstd` from its sysroot.
+[lib]
+path = "src/lib.rs"

@@ -56,7 +56,7 @@ jobs:
       - name: Verify the crate packages cleanly
         run: cargo publish --dry-run --locked
 
-  verify:
+  verify-lean:
     name: verify (lean)
     runs-on: ubuntu-latest
     steps:
@@ -73,6 +73,20 @@ jobs:
           lake update
           lake exe cache get || true
           lake build
+
+  verify-verus:
+    name: verify (verus)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install rustup toolchain for Verus
+        run: |
+          toolchain="$(grep -E '^verus_rust_toolchain=' verification/VERSIONS | cut -d= -f2)"
+          rustup install "$toolchain"
+      - name: Ensure unzip (Verus release zip)
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq unzip
+      - name: Verus-verify migrate/rollback core
+        run: ./verification/scripts/verify-verus.sh
 
   rust-build:
     needs: unit

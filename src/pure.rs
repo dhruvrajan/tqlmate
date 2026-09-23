@@ -11,7 +11,10 @@
 //! [`plan_migrate`] / [`plan_rollback`] decide an ordered [`Plan`] of [`Op`]s.
 //! [`step`] / [`run`] interpret plans over abstract [`State`] (applied versions).
 //! The TypeDB runner executes a plan under effect axioms (see `verification/README.md`).
-
+//!
+//! A parallel **Verus** path (`verification/verus`) proves the same class of
+//! migrate/rollback properties on Verus-annotated Rust; CI runs both verifiers
+//! until Verus fully supersedes the Aeneas extract story.
 #![allow(dead_code)]
 #![allow(clippy::manual_range_contains)]
 // Prefer explicit `match` / `Vec::new`+`push` so Charon→Aeneas extracts cleanly.

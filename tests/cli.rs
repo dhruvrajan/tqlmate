@@ -55,6 +55,15 @@ fn argv_wait_timeout() {
 }
 
 #[test]
+fn argv_wait_interval_default_and_flag() {
+    let defaulted = parse(&["wait"]);
+    assert_eq!(defaulted.wait_interval, 1);
+    let cli = parse(&["--wait-interval", "3", "wait"]);
+    assert_eq!(cli.wait_interval, 3);
+    assert_eq!(cli.command, Command::Wait { timeout: 60 });
+}
+
+#[test]
 fn argv_global_flags_before_subcommand() {
     let cli = parse(&[
         "-v",

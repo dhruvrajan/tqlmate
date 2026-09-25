@@ -18,7 +18,7 @@ use tokio::sync::OnceCell;
 use tqlmate::{bootstrap_schema, Opts, Runner, TypeDbUrl, ENTITY};
 
 const TYPEDB_IMAGE: &str = "typedb/typedb";
-const TYPEDB_TAG: &str = "3.12.3";
+const TYPEDB_TAG: &str = "3.13.6";
 const TYPEDB_PORT: u16 = 1729;
 
 struct SharedTypeDb {
@@ -83,6 +83,7 @@ async fn shared_typedb() -> &'static SharedTypeDb {
             strict: false,
             verbose: false,
             wait_timeout: None,
+            wait_interval: Duration::from_secs(1),
         });
         waiter
             .wait(Duration::from_secs(120))
@@ -118,6 +119,7 @@ fn opts(url: TypeDbUrl, migrations: PathBuf, schema: PathBuf) -> Opts {
         strict: false,
         verbose: true,
         wait_timeout: None,
+        wait_interval: Duration::from_secs(1),
     }
 }
 

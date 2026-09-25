@@ -21,6 +21,8 @@ pub struct Opts {
     pub strict: bool,
     pub verbose: bool,
     pub wait_timeout: Option<Duration>,
+    /// Interval between connection probes while waiting (dbmate `--wait-interval`).
+    pub wait_interval: Duration,
 }
 
 pub struct Runner {
@@ -44,7 +46,13 @@ impl Runner {
     async fn connect(&mut self) -> Result<&TypeDBDriver> {
         if self.driver.is_none() {
             if let Some(timeout) = self.opts.wait_timeout {
-                wait_for_server(self.url()?, timeout, self.opts.verbose).await?;
+                wait_for_server(
+                    self.url()?,
+                    timeout,
+                    self.opts.wait_interval,
+                    self.opts.verbose,
+                )
+                .await?;
             }
             self.driver = Some(open_driver(self.url()?).await?);
         }
@@ -211,7 +219,13 @@ impl Runner {
     }
 
     pub async fn wait(&mut self, timeout: Duration) -> Result<()> {
-        wait_for_server(self.url()?, timeout, self.opts.verbose).await
+        wait_for_server(
+            self.url()?,
+            timeout,
+            self.opts.wait_interval,
+            self.opts.verbose,
+        )
+        .await
     }
 
     pub async fn up(&mut self) -> Result<()> {
@@ -232,8 +246,18 @@ async fn open_driver(url: &TypeDbUrl) -> Result<TypeDBDriver> {
     Ok(TypeDBDriver::new(addresses, credentials, DriverOptions::new(tls)).await?)
 }
 
-async fn wait_for_server(url: &TypeDbUrl, timeout: Duration, verbose: bool) -> Result<()> {
+async fn wait_for_server(
+    url: &TypeDbUrl,
+    timeout: Duration,
+    interval: Duration,
+    verbose: bool,
+) -> Result<()> {
     let start = std::time::Instant::now();
+    let interval = if interval.is_zero() {
+        Duration::from_secs(1)
+    } else {
+        interval
+    };
     loop {
         match open_driver(url).await {
             Ok(_) => {
@@ -252,7 +276,7 @@ async fn wait_for_server(url: &TypeDbUrl, timeout: Duration, verbose: bool) -> R
                 if verbose {
                     eprintln!("waiting for TypeDB at {} ({e})", url.address());
                 }
-                tokio::time::sleep(Duration::from_millis(500)).await;
+                tokio::time::sleep(interval).await;
             }
         }
     }

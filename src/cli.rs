@@ -29,6 +29,16 @@ pub struct Cli {
     #[arg(long = "wait", global = true, value_name = "SECS")]
     pub wait: Option<u64>,
 
+    /// Seconds between connection attempts while waiting for TypeDB (dbmate `--wait-interval`).
+    #[arg(
+        long = "wait-interval",
+        global = true,
+        value_name = "SECS",
+        default_value = "1",
+        env = "TQLMATE_WAIT_INTERVAL"
+    )]
+    pub wait_interval: u64,
+
     #[arg(long = "strict", global = true, env = "TQLMATE_STRICT")]
     pub strict: bool,
 

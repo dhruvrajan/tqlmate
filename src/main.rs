@@ -36,6 +36,7 @@ async fn run() -> Result<ExitCode> {
         strict: cli.strict,
         verbose: cli.verbose,
         wait_timeout: cli.wait.map(Duration::from_secs),
+        wait_interval: Duration::from_secs(cli.wait_interval),
     };
     let mut runner = Runner::new(opts);
 

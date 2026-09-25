@@ -29,7 +29,7 @@ dotenvy = "0.15"
 futures = { version = "0.3", default-features = false, features = ["std"] }
 thiserror = "2"
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "time", "fs", "sync"] }
-typedb-driver = "3.12.3"
+typedb-driver = "3.13.6"
 
 [dev-dependencies]
 tempfile = "3"

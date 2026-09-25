@@ -47,7 +47,7 @@ Set via `--url` / `-u`, or `TYPEDB_URL` (alias `DATABASE_URL`). Optional `.env` 
 | `load` | Load `db/schema.tql` into the database |
 | `wait` | Block until TypeDB accepts connections |
 
-Useful flags: `-d/--migrations-dir`, `--schema-file`, `--wait <secs>`, `--strict`, `-v/--verbose`.
+Useful flags: `-d/--migrations-dir`, `--schema-file`, `--wait <secs>`, `--wait-interval <secs>`, `--strict`, `-v/--verbose`.
 
 ## Example
 
@@ -95,6 +95,6 @@ Each up/down runs in one **SCHEMA** transaction together with the ledger write (
   → `CoreProperties` / `ExtrProperties`). They coexist until Verus fully covers
   extract fidelity + parse fixtures; see [`verification/README.md`](verification/README.md).
   Release binaries need neither verifier.
-- **Integration** (`tests/typedb_docker.rs` only, feature `typedb-docker`, on by default): TypeDB via [testcontainers](https://testcontainers.com/) (`typedb/typedb:3.12.3`). Requires Docker; fails loudly if unavailable (no silent skip).
+- **Integration** (`tests/typedb_docker.rs` only, feature `typedb-docker`, on by default): TypeDB via [testcontainers](https://testcontainers.com/) (`typedb/typedb:3.13.6`). Requires Docker; fails loudly if unavailable (no silent skip).
 - CI (`.github/workflows/ci.yml`, GitHub-hosted runners): jobs `unit` → `integration`, plus parallel `lint`, `verify (lean)`, `verify (verus)`, and `package` (`cargo publish --dry-run`).
 - Release: pushing a `v*` tag runs `.github/workflows/release.yml` — unit tests, then cross-platform binaries, then a GitHub Release with those archives attached and a `cargo publish` to crates.io (`CARGO_REGISTRY_TOKEN` secret). Releases are cut from GitHub only, never from a laptop.

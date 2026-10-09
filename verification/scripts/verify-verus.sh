@@ -92,13 +92,14 @@ install_verus_linux() {
   fi
 
   # Install matching rustup toolchain if Verus cannot start yet.
+  # rustup writes progress to stdout — redirect so only the binary path is captured.
   if ! "$verus_bin" --version >/dev/null 2>&1; then
     echo "Installing rustup toolchain ${VERUS_RUST_TOOLCHAIN} for Verus ..." >&2
     if ! command -v rustup >/dev/null 2>&1; then
       echo "error: rustup not found; install rustup then: rustup install ${VERUS_RUST_TOOLCHAIN}" >&2
       return 1
     fi
-    rustup install "$VERUS_RUST_TOOLCHAIN"
+    rustup install "$VERUS_RUST_TOOLCHAIN" >&2
   fi
 
   # Only the binary path goes to stdout (for command substitution).
@@ -113,7 +114,7 @@ ensure_toolchain() {
       echo "error: rustup not found; install rustup then: rustup install ${VERUS_RUST_TOOLCHAIN}" >&2
       return 1
     fi
-    rustup install "$VERUS_RUST_TOOLCHAIN"
+    rustup install "$VERUS_RUST_TOOLCHAIN" >&2
   fi
   if ! "$verus_bin" --version >/dev/null 2>&1; then
     echo "error: $verus_bin still cannot run after toolchain install" >&2

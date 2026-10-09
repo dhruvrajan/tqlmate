@@ -19,7 +19,7 @@ if [[ -f "$VERSIONS_FILE" ]]; then
   VERUS_VERSION="${VERUS_VERSION:-$(grep -E '^verus=' "$VERSIONS_FILE" | cut -d= -f2)}"
   VERUS_RUST_TOOLCHAIN="${VERUS_RUST_TOOLCHAIN:-$(grep -E '^verus_rust_toolchain=' "$VERSIONS_FILE" | cut -d= -f2)}"
 fi
-VERUS_VERSION="${VERUS_VERSION:-0.2026.09.20.aef82ed}"
+VERUS_VERSION="${VERUS_VERSION:-0.2026.10.04.426d8b0}"
 VERUS_RUST_TOOLCHAIN="${VERUS_RUST_TOOLCHAIN:-1.98.1-x86_64-unknown-linux-gnu}"
 VERUS_RLIMIT="${VERUS_RLIMIT:-80}"
 

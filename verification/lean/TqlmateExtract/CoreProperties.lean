@@ -33,6 +33,22 @@ open tqlmate_extract
 
 namespace TqlmateExtract.CoreProperties
 
+/-- `spec_equiv_exists` was removed when `Result` became an `ITree`.
+    Total correctness still means the computation is exactly `ok`. -/
+private theorem spec_equiv_exists {α : Type} (m : Result α) (P : α → Prop) :
+    WP.spec m P ↔ ∃ y, m = ok y ∧ P y := by
+  constructor
+  · intro h
+    cases m using Result.cases with
+    | ret y =>
+      exact ⟨y, rfl, (WP.spec_ok (p := P) y).mp h⟩
+    | vis e k =>
+      exact False.elim ((WP.spec_vis e k (p := P)).mp h)
+    | div =>
+      exact False.elim ((WP.spec_div (p := P)).mp h)
+  · rintro ⟨y, rfl, hP⟩
+    exact (WP.spec_ok (p := P) y).mpr hP
+
 set_option maxHeartbeats 8000000
 
 private instance : BEq pure.PlanError where
@@ -113,7 +129,7 @@ theorem prefix_clone_zero (applied : Slice pure.Version) :
       unfold pure.prefix_clone_loop.body
       simp [hi, hout]
     · simp
-  rw [WP.spec_equiv_exists] at h
+  rw [spec_equiv_exists] at h
   rcases h with ⟨out, hout, heq⟩
   simpa [heq] using hout
 
@@ -137,24 +153,24 @@ theorem remove_last_matching_singleton (v : pure.Version) :
     have hne : ¬ (1 = 0) := by decide
     simp [hlen, hne]
   rw [hempty]
-  simp only [bind_tc_ok, Bool.false_eq_true, ↓reduceIte]
+  simp only [bind_tc_eq, bind_ok, Bool.false_eq_true, ↓reduceIte]
   have hlen1 : (Slice.from [v] (len1_le v)).len = 1#usize := by
     apply UScalar.eq_of_val_eq; rfl
   have hsub01 : (1#usize - 1#usize) = ok 0#usize := rfl
   have hsub : ((Slice.from [v] (len1_le v)).len - 1#usize) = ok 0#usize := by
     simpa [hlen1] using hsub01
-  simp only [hsub, bind_tc_ok]
+  simp only [hsub, bind_tc_eq, bind_ok]
   have hidx : Slice.index_usize (Slice.from [v] (len1_le v)) 0#usize = ok v := by
     have h := Slice.index_usize_spec (Slice.from [v] (len1_le v)) 0#usize
       (by simp [Slice.from_val])
-    rw [WP.spec_equiv_exists] at h
+    rw [spec_equiv_exists] at h
     rcases h with ⟨x, hx, heq⟩
     have : x = v := by
       have g : (Slice.from [v] (len1_le v)).val[0]'(by simp [Slice.from_val]) = v := by
         simp [Slice.from_val]
       exact heq.trans g
     simpa [this] using hx
-  simp only [hidx, bind_tc_ok, version_eq_refl, ↓reduceIte]
+  simp only [hidx, bind_tc_eq, bind_ok, version_eq_refl, ↓reduceIte]
   exact prefix_clone_zero _
 
 /-! ## ∀ `run` fold -/
@@ -175,7 +191,7 @@ theorem run_nil_of_empty (s : pure.State) (plan : Slice pure.Op)
     have : plan.length = 0 := by simpa using congrArg List.length he
     simp [this]
   rw [hempty]
-  simp only [bind_tc_ok, ↓reduceIte]
+  simp only [bind_tc_eq, bind_ok, ↓reduceIte]
 
 /-- Singleton fold: `run s [op] = (do let r ← step s op; ok r)`. -/
 theorem run_singleton (s : pure.State) (op : pure.Op) :
@@ -190,18 +206,18 @@ theorem run_singleton (s : pure.State) (op : pure.Op) :
     have hne : ¬ (1 = 0) := by decide
     simp [hlen, hne]
   rw [hempty]
-  simp only [bind_tc_ok, Bool.false_eq_true, ↓reduceIte]
+  simp only [bind_tc_eq, bind_ok, Bool.false_eq_true, ↓reduceIte]
   have hidx : Slice.index_usize (Slice.from [op] (len1_le op)) 0#usize = ok op := by
     have h := Slice.index_usize_spec (Slice.from [op] (len1_le op)) 0#usize
       (by simp [Slice.from_val])
-    rw [WP.spec_equiv_exists] at h
+    rw [spec_equiv_exists] at h
     rcases h with ⟨x, hx, heq⟩
     have hxop : x = op := by
       have : (Slice.from [op] (len1_le op)).val[0]'(by simp [Slice.from_val]) = op := by
         simp [Slice.from_val]
       exact heq.trans this
     simpa [hxop] using hx
-  simp only [hidx, bind_tc_ok, op_clone_id]
+  simp only [hidx, bind_tc_eq, bind_ok, op_clone_id]
   congr 1
   funext r
   cases r with
@@ -212,10 +228,12 @@ theorem run_singleton (s : pure.State) (op : pure.Op) :
       core.slice.index.SliceIndexRangeFromUsizeSlice.index.step_spec
         (r := { start := 1#usize }) (s := Slice.from [op] (len1_le op))
         (by change 1 ≤ _; have : (Slice.from [op] (len1_le op)).length = 1 := rfl; omega)
-    rw [WP.spec_equiv_exists] at hrange
+    rw [spec_equiv_exists] at hrange
     rcases hrange with ⟨s1, hs1eq, hval, _hlen⟩
     have hempty1 : s1.val = [] := by simpa [Slice.from_val] using hval
-    rw [hs1eq, bind_tc_ok, run_nil_of_empty s' s1 hempty1]
+    rw [hs1eq]
+    simp only [bind_ok, bind_tc_eq]
+    exact run_nil_of_empty s' s1 hempty1
   | Err e =>
     rfl
 
@@ -237,18 +255,18 @@ theorem run_cons (s : pure.State) (op : pure.Op) (rest : List pure.Op)
     have hne : ¬ (Nat.succ rest.length = 0) := Nat.succ_ne_zero _
     simp [hlen, hne]
   rw [hempty]
-  simp only [bind_tc_ok, Bool.false_eq_true, ↓reduceIte]
+  simp only [bind_tc_eq, bind_ok, Bool.false_eq_true, ↓reduceIte]
   have hidx : Slice.index_usize (Slice.from (op :: rest) h) 0#usize = ok op := by
     have hs := Slice.index_usize_spec (Slice.from (op :: rest) h) 0#usize
       (by simp [Slice.from_val])
-    rw [WP.spec_equiv_exists] at hs
+    rw [spec_equiv_exists] at hs
     rcases hs with ⟨x, hx, heq⟩
     have : x = op := by
       have g : (Slice.from (op :: rest) h).val[0]'(by simp [Slice.from_val]) = op := by
         simp [Slice.from_val]
       exact heq.trans g
     simpa [this] using hx
-  simp only [hidx, bind_tc_ok, op_clone_id]
+  simp only [hidx, bind_tc_eq, bind_ok, op_clone_id]
   congr 1; funext r
   cases r with
   | Ok s' =>
@@ -263,13 +281,14 @@ theorem run_cons (s : pure.State) (op : pure.Op) (rest : List pure.Op)
     have hrange :=
       core.slice.index.SliceIndexRangeFromUsizeSlice.index.step_spec
         (r := { start := 1#usize }) (s := Slice.from (op :: rest) h) hbound
-    rw [WP.spec_equiv_exists] at hrange
+    rw [spec_equiv_exists] at hrange
     rcases hrange with ⟨s1, hs1eq, hval, _⟩
     have hvals : s1.val = rest := by simpa [Slice.from_val] using hval
     have hs1 : s1 = Slice.from rest hrest := by
       apply Slice.ext
       simpa [Slice.from_val] using hvals
-    rw [hs1eq, bind_tc_ok, hs1]
+    rw [hs1eq, hs1]
+    simp only [bind_ok]
   | Err e =>
     rfl
 
@@ -413,7 +432,7 @@ theorem plan_rollback_nonempty_eq
       simpa [Slice.length] using (List.length_eq_zero_iff.mp hlen)
     simp [this]
   rw [hempty]
-  simp only [bind_tc_ok, Bool.false_eq_true, ↓reduceIte]
+  simp only [bind_ok, Bool.false_eq_true, ↓reduceIte]
   rfl
 
 /-! ## Round-trip & migrate-then-run -/
@@ -436,7 +455,7 @@ theorem roundtrip_up_down (v : pure.Version) (up down : String)
     simp [hlen0]; native_decide
   have hup :=
     step_apply_up_ok ⟨alloc.vec.Vec.new pure.Version⟩ v up hneU hroom
-  rw [WP.spec_equiv_exists] at hup
+  rw [spec_equiv_exists] at hup
   rcases hup with ⟨r1, hr1, applied', hr1eq, happ⟩
   have happ' : applied'.val = [v] := by simpa [hlen0] using happ
   simp [hr1, hr1eq]
@@ -446,7 +465,7 @@ theorem roundtrip_up_down (v : pure.Version) (up down : String)
     apply Slice.ext
     simp [alloc.vec.Vec.deref, Slice.from_val, happ']
   rw [hslice, remove_last_matching_singleton]
-  simp only [bind_tc_ok]
+  simp only [bind_ok]
 
 /--
 One successful ApplyUp appends the version (migrate-then-run base case).
@@ -462,11 +481,11 @@ theorem run_one_apply_up_appends (s : pure.State) (v : pure.Version) (up : Strin
           applied'.val = s.applied.val ++ [v] ⦄ := by
   have hrun := run_singleton s (pure.Op.ApplyUp v up)
   have hstep := step_apply_up_ok s v up hne hroom
-  rw [WP.spec_equiv_exists] at hstep
+  rw [spec_equiv_exists] at hstep
   rcases hstep with ⟨rstep, hrstep, applied', hrsteq, happ⟩
   rw [hrun, hrstep]
-  simp only [bind_tc_ok]
-  exact ⟨applied', by simp [hrsteq], happ⟩
+  simp only [bind_ok, WP.spec_ok, hrsteq]
+  exact ⟨applied', rfl, happ⟩
 
 /-! ## Regression fixtures (`native_decide`) -/
 

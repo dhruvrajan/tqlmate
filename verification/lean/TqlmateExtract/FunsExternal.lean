@@ -1,5 +1,7 @@
-import Aeneas
-import TqlmateExtract.Types
+module
+public import Aeneas
+public import TqlmateExtract.Types
+@[expose] public section
 open Aeneas Aeneas.Std Result ControlFlow Error
 set_option linter.dupNamespace false
 set_option linter.hashCommand false
@@ -7,6 +9,7 @@ set_option linter.unusedVariables false
 set_option linter.style.whitespace false
 set_option linter.style.setOption false
 set_option linter.style.longLine false
+set_option linter.internalConstructors false
 set_option maxHeartbeats 1000000
 set_option maxRecDepth 2048
 open tqlmate_extract
@@ -23,7 +26,7 @@ def stringToStr (s : String) : Str :=
   else
     toStr "" (by decide +native)
 
-private def cmpU8List : List U8 → List U8 → Ordering
+def cmpU8List : List U8 → List U8 → Ordering
   | [], [] => .eq
   | [], _ => .lt
   | _, [] => .gt
@@ -36,12 +39,6 @@ private def cmpU8List : List U8 → List U8 → Ordering
 def Char.Insts.CoreConvertFromU8.from (x : Std.U8) : Result Char :=
   ok (Char.ofNat x.val)
 
-@[rust_fun "core::cmp::impls::{core::cmp::PartialOrd<&'1 @A, &'0 @B>}::lt"]
-def Shared1A.Insts.CoreCmpPartialOrdShared0B.lt
-    {A : Type} {B : Type} (PartialOrdInst : core.cmp.PartialOrd A B)
-    (a : A) (b : B) : Result Bool :=
-  PartialOrdInst.lt a b
-
 @[rust_fun "core::fmt::{core::fmt::Display<str>}::fmt"]
 def Str.Insts.CoreFmtDisplay.fmt
     (_ : Str) (fmt : core.fmt.Formatter) :
@@ -52,15 +49,15 @@ def Str.Insts.CoreFmtDisplay.fmt
   "core::option::{core::ops::try_trait::Try<core::option::Option<@T>>}::branch"]
 def core.option.Option.Insts.CoreOpsTry_traitTry.branch {T : Type}
     (o : Option T) :
-    Result (core.ops.control_flow.ControlFlow (Option core.convert.Infallible) T) :=
+    Result (core.ops.control_flow.ControlFlow (Option Never) T) :=
   match o with
   | some v => ok (.Continue v)
   | none => ok (.Break none)
 
 @[rust_fun
-  "core::option::{core::ops::try_trait::FromResidual<core::option::Option<@T>, core::option::Option<core::convert::Infallible>>}::from_residual"]
-def core.option.Option.Insts.CoreOpsTry_traitFromResidualOptionInfallible.from_residual
-    (T : Type) (r : Option core.convert.Infallible) : Result (Option T) :=
+  "core::option::{core::ops::try_trait::FromResidual<core::option::Option<@T>, core::option::Option<!>>}::from_residual"]
+def core.option.Option.Insts.CoreOpsTry_traitFromResidualOptionNever.from_residual
+    (T : Type) (r : Option Never) : Result (Option T) :=
   match r with
   | none => ok none
   | some i => nomatch i

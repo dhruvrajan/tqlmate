@@ -1,0 +1,16 @@
+{
+  "resources": {
+    "includes": [
+      {
+        "pattern": ".*\\.so"
+      },
+      {
+        "pattern": "ledger/.*"
+      },
+      {
+        "pattern": "META-INF/services/.*"
+      }
+    ]
+  },
+  "bundles": []
+}

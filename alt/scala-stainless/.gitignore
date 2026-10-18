@@ -1,0 +1,12 @@
+.stainless/
+dist/
+.scala-build/
+.bsp/
+*.tasty
+target/
+metal/
+.metals/
+.bloop/
+.vscode/
+native-libs/
+*.log

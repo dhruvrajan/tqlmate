@@ -1,0 +1,73 @@
+name: scala-stainless (opt-in prototype)
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'alt/scala-stainless/**'
+      - '.github/workflows/scala-stainless.yml'
+  push:
+    paths:
+      - 'alt/scala-stainless/**'
+      - '.github/workflows/scala-stainless.yml'
+
+jobs:
+  stainless:
+    name: stainless verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cache Stainless
+        uses: actions/cache@v4
+        with:
+          path: alt/scala-stainless/.stainless
+          key: stainless-0.10.3-${{ runner.os }}
+      - name: Verify core
+        run: |
+          chmod +x alt/scala-stainless/scripts/verify.sh
+          alt/scala-stainless/scripts/verify.sh
+      - name: Upload Stainless report
+        uses: actions/upload-artifact@v4
+        with:
+          name: stainless-report
+          path: alt/scala-stainless/verified/stainless-report.txt
+
+  native:
+    name: native-image build
+    runs-on: ubuntu-latest
+    needs: stainless
+    steps:
+      - uses: actions/checkout@v4
+      - uses: coursier/cache-action@v6
+      - name: Setup GraalVM 21
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '21'
+          distribution: 'graalvm-community'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          native-image-job-reports: 'true'
+      - name: Install scala-cli
+        run: |
+          curl -fL "https://github.com/VirtusLab/scala-cli/releases/download/v1.18.0/scala-cli-x86_64-pc-linux.gz" \
+            | gunzip > /usr/local/bin/scala-cli
+          chmod +x /usr/local/bin/scala-cli
+          scala-cli version
+      - name: Build native binary
+        run: |
+          chmod +x alt/scala-stainless/build-native.sh
+          alt/scala-stainless/build-native.sh
+      - name: Smoke offline commands
+        run: |
+          bin=alt/scala-stainless/dist/tqlmate-scala
+          "$bin" --help
+          rm -rf /tmp/tqlmate-scala-smoke && mkdir /tmp/tqlmate-scala-smoke && cd /tmp/tqlmate-scala-smoke
+          "$GITHUB_WORKSPACE/$bin" new create_person
+          test -f db/migrations/*_create_person.tql
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: tqlmate-scala-linux
+          path: |
+            alt/scala-stainless/dist/tqlmate-scala
+            alt/scala-stainless/dist/tqlmate-scala.jar
+            alt/scala-stainless/dist/native-image.log

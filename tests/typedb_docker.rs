@@ -18,7 +18,7 @@ use tokio::sync::OnceCell;
 use tqlmate::{bootstrap_schema, Opts, Runner, TypeDbUrl, ENTITY};
 
 const TYPEDB_IMAGE: &str = "typedb/typedb";
-const TYPEDB_TAG: &str = "3.13.6";
+const TYPEDB_TAG: &str = "3.14.1";
 const TYPEDB_PORT: u16 = 1729;
 
 struct SharedTypeDb {

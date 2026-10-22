@@ -4,7 +4,7 @@
 
 This tree ports the pure migrate/rollback plan+interpreter core to a
 Stainless-verifiable Scala 3 subset, with a thin CLI that uses the official
-**TypeDB Java driver 3.13.6**, and a GraalVM **native-image** distribution.
+**TypeDB Java driver 3.14.0**, and a GraalVM **native-image** distribution.
 
 ## Layout
 
@@ -56,7 +56,7 @@ JAR. `build-native.sh` builds a ZIP_STORED companion
 
 ## TypeDB
 
-Uses `com.typedb:typedb-driver:3.13.6` from
+Uses `com.typedb:typedb-driver:3.14.0` from
 `https://repo.typedb.com/public/public-release/maven/`.
 
 Commands mirror the Rust CLI where practical: `new`, `up`, `create`, `drop`,

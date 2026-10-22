@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Build assembly JAR + GraalVM native-image binary for tqlmate-scala.
 #
-# Why GraalVM (not Scala Native): the official TypeDB 3.13.6 Java driver ships
+# Why GraalVM (not Scala Native): the official TypeDB 3.14.0 Java driver ships
 # platform JNI natives (`libtypedb_driver_jni-*.so`). GraalVM can embed those as
 # classpath resources that the driver's Loader unpacks at runtime. Scala Native
 # cannot load the typedb-driver JNI artifacts.
@@ -42,7 +42,7 @@ export PATH="${JAVA_HOME}/bin:${PATH}"
 echo "==> Packaging assembly JAR"
 "$SCALA_CLI" --power package \
   --scala 3.3.6 --jvm 21 \
-  --dependency com.typedb:typedb-driver:3.13.6 \
+  --dependency com.typedb:typedb-driver:3.14.0 \
   --repository https://repo.typedb.com/public/public-release/maven/ \
   --resource-dirs "$ROOT/resources" \
   --assembly \

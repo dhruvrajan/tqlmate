@@ -89,7 +89,7 @@ Native-image startup is competitive with Rust for offline commands. Image size i
 | Day-to-day build | `cargo build --release` | `scala-cli package` / `build-native.sh` |
 | Verification | Verus + Lean/Aeneas (two CI jobs) | Stainless only for this alt |
 | Native dist | cargo / cross | GraalVM native-image + **uncompressed JNI companion jar** |
-| Driver | `typedb-driver` crate | Java driver 3.13.6 from `repo.typedb.com` |
+| Driver | `typedb-driver` crate | Java driver 3.14.0 from `repo.typedb.com` |
 
 ## Gotchas
 

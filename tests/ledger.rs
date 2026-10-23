@@ -13,8 +13,7 @@ fn mf(version: &str, name: &str, up: &str, down: &str) -> MigrationFile {
         version: Version::new(version),
         name: name.into(),
         path: PathBuf::from(format!("{version}_{name}.tql")),
-        up: up.into(),
-        down: down.into(),
+        sections: vec![(up.into(), down.into())],
     }
 }
 
@@ -50,9 +49,9 @@ fn shipped_ledger_migrations_list_embedded_init() {
     assert_eq!(files[0].version.as_str(), "00000000000001");
     assert_eq!(files[0].name, "ledger_init");
     assert!(files[0].path.to_string_lossy().starts_with("embedded:"));
-    assert!(files[0].up.contains(ENTITY));
+    assert!(files[0].up().contains(ENTITY));
     assert!(
-        !files[0].down.trim().is_empty(),
+        !files[0].down().trim().is_empty(),
         "empty down is a hard error"
     );
     for f in &files {
@@ -174,8 +173,7 @@ fn dump_header_lists_labels_or_raw_versions() {
         version: Version::new("1"),
         name: "person".into(),
         path: PathBuf::from("1_person.tql"),
-        up: String::new(),
-        down: String::new(),
+        sections: vec![(String::new(), String::new())],
     }];
     let empty = dump_header(&[], &files);
     assert!(empty.contains("-- Schema dumped by tqlmate"));
@@ -202,8 +200,7 @@ fn dump_header_round_trip_with_strip() {
         version: Version::new("20240101000000"),
         name: "person".into(),
         path: PathBuf::from("20240101000000_person.tql"),
-        up: String::new(),
-        down: String::new(),
+        sections: vec![(String::new(), String::new())],
     }];
     let header = dump_header(&[Version::new("20240101000000")], &files);
     let full = format!("{header}define\n  entity person;\n");

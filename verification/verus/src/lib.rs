@@ -46,8 +46,10 @@ pub struct MigrationSpec {
 }
 
 pub enum Op {
-    ApplyUp { version: Version, up: String },
-    ApplyDown { version: Version, down: String },
+    /// `record` true ⇒ append version (last section of a file).
+    ApplyUp { version: Version, up: String, record: bool },
+    /// `delete` true ⇒ remove last matching version (final rollback section).
+    ApplyDown { version: Version, down: String, delete: bool },
 }
 
 pub struct State {
@@ -211,33 +213,47 @@ pub fn step(state: State, op: Op) -> (r: Result<State, StepError>)
         op_bodies_ascii(op),
     ensures
         match op {
-            Op::ApplyUp { version, up } => {
+            Op::ApplyUp { version, up, record } => {
                 if body_is_empty_spec(up@) {
                     match r {
                         Result::Err(StepError::EmptyUp { version: ev }) => ev.s@ == version.s@,
                         _ => false,
                     }
-                } else {
+                } else if record {
                     match r {
                         Result::Ok(s) => version_views(s.applied@) =~= version_views(
                             state.applied@,
                         ) + seq![version.s@],
                         _ => false,
                     }
+                } else {
+                    match r {
+                        Result::Ok(s) => version_views(s.applied@) =~= version_views(
+                            state.applied@,
+                        ),
+                        _ => false,
+                    }
                 }
             },
-            Op::ApplyDown { version, down } => {
+            Op::ApplyDown { version, down, delete } => {
                 if body_is_empty_spec(down@) {
                     match r {
                         Result::Err(StepError::EmptyDown { version: ev }) => ev.s@
                             == version.s@,
                         _ => false,
                     }
-                } else {
+                } else if delete {
                     match r {
                         Result::Ok(s) => version_views(s.applied@) =~= remove_last_matching_spec(
                             version_views(state.applied@),
                             version.s@,
+                        ),
+                        _ => false,
+                    }
+                } else {
+                    match r {
+                        Result::Ok(s) => version_views(s.applied@) =~= version_views(
+                            state.applied@,
                         ),
                         _ => false,
                     }
@@ -246,20 +262,28 @@ pub fn step(state: State, op: Op) -> (r: Result<State, StepError>)
         },
 {
     match op {
-        Op::ApplyUp { version, up } => {
+        Op::ApplyUp { version, up, record } => {
             if body_is_empty(up.as_str()) {
                 return Err(StepError::EmptyUp { version });
             }
-            let mut applied = state.applied;
-            applied.push(version);
-            Ok(State { applied })
+            if record {
+                let mut applied = state.applied;
+                applied.push(version);
+                Ok(State { applied })
+            } else {
+                Ok(state)
+            }
         },
-        Op::ApplyDown { version, down } => {
+        Op::ApplyDown { version, down, delete } => {
             if body_is_empty(down.as_str()) {
                 return Err(StepError::EmptyDown { version });
             }
-            let applied = remove_last_matching(&state.applied, &version);
-            Ok(State { applied })
+            if delete {
+                let applied = remove_last_matching(&state.applied, &version);
+                Ok(State { applied })
+            } else {
+                Ok(state)
+            }
         },
     }
 }
@@ -269,32 +293,32 @@ fn clone_op(op: &Op) -> (out: Op)
         op_bodies_ascii(*op) ==> op_bodies_ascii(out),
         match (*op, out) {
             (
-                Op::ApplyUp { version: v1, up: u1 },
-                Op::ApplyUp { version: v2, up: u2 },
-            ) => v1.s@ == v2.s@ && u1@ == u2@ && u1.is_ascii() == u2.is_ascii(),
+                Op::ApplyUp { version: v1, up: u1, record: r1 },
+                Op::ApplyUp { version: v2, up: u2, record: r2 },
+            ) => v1.s@ == v2.s@ && u1@ == u2@ && r1 == r2 && u1.is_ascii() == u2.is_ascii(),
             (
-                Op::ApplyDown { version: v1, down: d1 },
-                Op::ApplyDown { version: v2, down: d2 },
-            ) => v1.s@ == v2.s@ && d1@ == d2@ && d1.is_ascii() == d2.is_ascii(),
+                Op::ApplyDown { version: v1, down: d1, delete: del1 },
+                Op::ApplyDown { version: v2, down: d2, delete: del2 },
+            ) => v1.s@ == v2.s@ && d1@ == d2@ && del1 == del2 && d1.is_ascii() == d2.is_ascii(),
             _ => false,
         },
 {
     match op {
-        Op::ApplyUp { version, up } => {
+        Op::ApplyUp { version, up, record } => {
             let u = up.clone();
             proof {
                 assert(u@ == up@);
                 assert(u.is_ascii() == up.is_ascii());
             }
-            Op::ApplyUp { version: version.clone_ver(), up: u }
+            Op::ApplyUp { version: version.clone_ver(), up: u, record: *record }
         },
-        Op::ApplyDown { version, down } => {
+        Op::ApplyDown { version, down, delete } => {
             let d = down.clone();
             proof {
                 assert(d@ == down@);
                 assert(d.is_ascii() == down.is_ascii());
             }
-            Op::ApplyDown { version: version.clone_ver(), down: d }
+            Op::ApplyDown { version: version.clone_ver(), down: d, delete: *delete }
         },
     }
 }
@@ -332,21 +356,25 @@ pub open spec fn run_spec(applied: Seq<Seq<char>>, plan: Seq<Op>) -> Result<Seq<
         Result::Ok(applied)
     } else {
         match plan[0] {
-            Op::ApplyUp { version, up } => {
+            Op::ApplyUp { version, up, record } => {
                 if body_is_empty_spec(up@) {
                     Result::Err(())
-                } else {
+                } else if record {
                     run_spec(applied + seq![version.s@], plan.subrange(1, plan.len() as int))
+                } else {
+                    run_spec(applied, plan.subrange(1, plan.len() as int))
                 }
             },
-            Op::ApplyDown { version, down } => {
+            Op::ApplyDown { version, down, delete } => {
                 if body_is_empty_spec(down@) {
                     Result::Err(())
-                } else {
+                } else if delete {
                     run_spec(
                         remove_last_matching_spec(applied, version.s@),
                         plan.subrange(1, plan.len() as int),
                     )
+                } else {
+                    run_spec(applied, plan.subrange(1, plan.len() as int))
                 }
             },
         }
@@ -433,7 +461,7 @@ pub fn plan_rollback(files: &Vec<MigrationSpec>, applied: &Vec<Version>) -> (r: 
                 proof {
                     assert(down.is_ascii() == m.down.is_ascii());
                 }
-                plan.push(Op::ApplyDown { version: m.version.clone_ver(), down });
+                plan.push(Op::ApplyDown { version: m.version.clone_ver(), down, delete: true });
                 Ok(plan)
             }
         },
@@ -538,7 +566,8 @@ fn plan_ups_from_pending(pending: &Vec<MigrationSpec>) -> (r: Result<Vec<Op>, Pl
         proof {
             assert(up.is_ascii());
         }
-        plan.push(Op::ApplyUp { version: f.version.clone_ver(), up });
+        // Single-section Verus model: always record (multi-section planning lives in src/pure.rs).
+        plan.push(Op::ApplyUp { version: f.version.clone_ver(), up, record: true });
         i = i + 1;
     }
     Ok(plan)
@@ -665,7 +694,7 @@ pub fn roundtrip_up_down(v: Version, up: String, down: String) -> (final_st: Sta
 {
     let state0 = State { applied: Vec::new() };
     let v_for_down = v.clone_ver();
-    let state1 = match step(state0, Op::ApplyUp { version: v, up }) {
+    let state1 = match step(state0, Op::ApplyUp { version: v, up, record: true }) {
         Result::Ok(s) => s,
         Result::Err(_) => {
             assert(false);
@@ -678,7 +707,10 @@ pub fn roundtrip_up_down(v: Version, up: String, down: String) -> (final_st: Sta
         assert(remove_last_matching_spec(version_views(state1.applied@), v_for_down.s@)
             =~= Seq::<Seq<char>>::empty());
     }
-    let state2 = match step(state1, Op::ApplyDown { version: v_for_down, down }) {
+    let state2 = match step(
+        state1,
+        Op::ApplyDown { version: v_for_down, down, delete: true },
+    ) {
         Result::Ok(s) => s,
         Result::Err(_) => {
             assert(false);
@@ -722,7 +754,7 @@ pub fn run_one_apply_up_appends(state: State, v: Version, up: String) -> (r: Res
             _ => false,
         }),
 {
-    step(state, Op::ApplyUp { version: v, up })
+    step(state, Op::ApplyUp { version: v, up, record: true })
 }
 
 /// Strict migrate maps a strict-order failure to `PlanError::StrictOrder`.

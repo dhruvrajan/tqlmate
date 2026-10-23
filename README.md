@@ -1,6 +1,8 @@
 # tqlmate
 
-dbmate-style migration CLI for TypeDB 3.x.
+dbmate-style migration CLI for TypeDB 3.x. Behaviour tracks
+[dbmate v2.37.0](https://github.com/amacneil/dbmate/releases/tag/v2.37.0)
+where it maps cleanly onto TypeDB (multi-section files; no `--migration-lock`).
 
 ## Install
 
@@ -77,9 +79,26 @@ undefine
   name;
 ```
 
-Each up/down runs in one **SCHEMA** transaction together with the ledger write (`_tqlmate_`-prefixed types). If the migration query fails, the transaction is closed and the version is **not** recorded.
+A file may contain **multiple** `-- migrate:up` / `-- migrate:down` section pairs
+(dbmate multi-section). Each section runs in its own TypeDB **SCHEMA** transaction.
+On migrate, sections run in file order; the ledger version is recorded **once** with
+the last section. On rollback, down sections run **last-to-first**, and the ledger
+row is deleted with the final down. `Applied:` / `Rolled back:` print only after
+every section of that file succeeds.
+
+**Partial failure:** if a later section fails, earlier sections’ schema commits
+remain (TypeDB has no cross-transaction undo), but the version is **not** recorded —
+same trade-off as dbmate. Re-running migrate will retry the whole file.
+
+Single-section files (the common case) behave as before: one SCHEMA transaction
+bundles the body with the ledger insert/delete.
 
 `--strict` refuses pending migrations whose version is lower than an already-applied version.
+
+**`--migration-lock`:** not implemented. dbmate’s flag uses a PostgreSQL session
+advisory lock on the migrating connection. TypeDB has no equivalent session lock
+API; a ledger-row “lock” would not survive across the separate SCHEMA transactions
+used per section, and inventing one would be unsound. Do not pass a fake flag.
 
 ## Notes
 

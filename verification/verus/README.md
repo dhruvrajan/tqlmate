@@ -5,6 +5,10 @@ migrate/rollback algorithm (same class of claims as Lean
 `CoreProperties.lean`). Production runtime still uses `src/pure.rs`; this crate
 is the verified executable model of that core, not a ghost-only Spec twin.
 
+`Op` carries `record` / `delete` (dbmate v2.37 ledger-once). Planners here still
+emit one section per file (`record`/`delete` always true); multi-section
+expansion is in production `src/pure.rs`.
+
 ```bash
 # from repo root (downloads Verus on Linux x86_64 if needed)
 ./verification/scripts/verify-verus.sh

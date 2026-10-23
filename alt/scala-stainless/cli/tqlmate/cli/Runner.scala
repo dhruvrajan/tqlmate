@@ -171,20 +171,28 @@ final class Runner(opts: Opts) {
     plan: Seq[BridgeOp]
   ): Unit = {
     for (op <- plan) op match {
-      case BridgeOp.ApplyUp(version, up) =>
+      case BridgeOp.ApplyUp(version, up, record) =>
         if (up.trim.isEmpty) throw new RuntimeException(s"empty up for $version")
-        val insert = Ledger.recordInsert(version, Ledger.nowStamp)
         if (opts.verbose) System.err.println(s"-> up $version")
-        Ledger.schemaQueries(d, db, Seq(up, insert))
-        val label = files.find(_.version == version).map(_.label).getOrElse(version)
-        println(s"Applied: $label")
-      case BridgeOp.ApplyDown(version, down) =>
+        if (record) {
+          val insert = Ledger.recordInsert(version, Ledger.nowStamp)
+          Ledger.schemaQueries(d, db, Seq(up, insert))
+          val label = files.find(_.version == version).map(_.label).getOrElse(version)
+          println(s"Applied: $label")
+        } else {
+          Ledger.schemaQueries(d, db, Seq(up))
+        }
+      case BridgeOp.ApplyDown(version, down, delete) =>
         if (down.trim.isEmpty) throw new RuntimeException(s"empty down for $version")
-        val delete = Ledger.recordDelete(version)
         if (opts.verbose) System.err.println(s"-> down $version")
-        Ledger.schemaQueries(d, db, Seq(down, delete))
-        val label = files.find(_.version == version).map(_.label).getOrElse(version)
-        println(s"Rolled back: $label")
+        if (delete) {
+          val del = Ledger.recordDelete(version)
+          Ledger.schemaQueries(d, db, Seq(down, del))
+          val label = files.find(_.version == version).map(_.label).getOrElse(version)
+          println(s"Rolled back: $label")
+        } else {
+          Ledger.schemaQueries(d, db, Seq(down))
+        }
     }
   }
 

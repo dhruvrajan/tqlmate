@@ -25,8 +25,10 @@ object Pure {
   )
 
   sealed abstract class Op
-  case class ApplyUp(version: Version, up: Codes) extends Op
-  case class ApplyDown(version: Version, down: Codes) extends Op
+  /** `record` true ⇒ append version (last section of a file). */
+  case class ApplyUp(version: Version, up: Codes, record: Boolean) extends Op
+  /** `delete` true ⇒ remove last matching version (final rollback section). */
+  case class ApplyDown(version: Version, down: Codes, delete: Boolean) extends Op
 
   case class State(applied: List[Version])
 
@@ -93,47 +95,61 @@ object Pure {
 
   def step(state: State, op: Op): Either[StepError, State] = {
     op match {
-      case ApplyUp(version, up) =>
+      case ApplyUp(version, up, record) =>
         if (bodyIsEmpty(up)) {
           Left[StepError, State](EmptyUp(version))
-        } else {
+        } else if (record) {
           Right[StepError, State](State(state.applied :+ version))
+        } else {
+          Right[StepError, State](state)
         }
-      case ApplyDown(version, down) =>
+      case ApplyDown(version, down, delete) =>
         if (bodyIsEmpty(down)) {
           Left[StepError, State](EmptyDown(version))
-        } else {
+        } else if (delete) {
           Right[StepError, State](
             State(removeLastMatching(state.applied, version))
           )
+        } else {
+          Right[StepError, State](state)
         }
     }
   }.ensuring(res => stepPost(state, op, res))
 
   def stepPost(state: State, op: Op, res: Either[StepError, State]): Boolean = {
     op match {
-      case ApplyUp(version, up) =>
+      case ApplyUp(version, up, record) =>
         if (bodyIsEmpty(up)) {
           res match {
             case Left(EmptyUp(ev)) => versionEq(ev, version)
             case _ => false
           }
-        } else {
+        } else if (record) {
           res match {
             case Right(s) => s.applied == (state.applied :+ version)
             case _ => false
           }
+        } else {
+          res match {
+            case Right(s) => s == state
+            case _ => false
+          }
         }
-      case ApplyDown(version, down) =>
+      case ApplyDown(version, down, delete) =>
         if (bodyIsEmpty(down)) {
           res match {
             case Left(EmptyDown(ev)) => versionEq(ev, version)
             case _ => false
           }
-        } else {
+        } else if (delete) {
           res match {
             case Right(s) =>
               s.applied == removeLastMatchingSpec(state.applied, version)
+            case _ => false
+          }
+        } else {
+          res match {
+            case Right(s) => s == state
             case _ => false
           }
         }
@@ -196,7 +212,8 @@ object Pure {
           planUpsFromPending(rest) match {
             case Left(e) => Left[PlanError, List[Op]](e)
             case Right(tail) =>
-              Right[PlanError, List[Op]](Cons(ApplyUp(f.version, f.up), tail))
+              // Single-section Stainless model: always record (multi-section in Rust pure.rs).
+              Right[PlanError, List[Op]](Cons(ApplyUp(f.version, f.up, true), tail))
           }
         }
     }
@@ -295,7 +312,7 @@ object Pure {
               Left[PlanError, List[Op]](PlanEmptyDown(m.version, m.name))
             } else {
               Right[PlanError, List[Op]](
-                Cons(ApplyDown(m.version, m.down), Nil[Op]())
+                Cons(ApplyDown(m.version, m.down, true), Nil[Op]())
               )
             }
         }

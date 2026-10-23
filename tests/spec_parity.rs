@@ -17,12 +17,12 @@ fn mid(version: &str, name: &str) -> MigrationId {
 }
 
 fn mspec(version: &str, up: &str, down: &str) -> MigrationSpec {
-    MigrationSpec {
-        version: Version::new(version),
-        name: version.into(),
-        up: up.into(),
-        down: down.into(),
-    }
+    MigrationSpec::single(
+        Version::new(version),
+        version.into(),
+        up.into(),
+        down.into(),
+    )
 }
 
 /// `parse_ok_example` / `parse_rejects_*` in ExtrProperties.lean
@@ -135,6 +135,7 @@ fn lean_core_plan_and_run() {
         Op::ApplyUp {
             version: Version::new("1"),
             up: "u1".into(),
+            record: true,
         },
     )
     .unwrap();
@@ -147,6 +148,7 @@ fn lean_core_plan_and_run() {
             Op::ApplyUp {
                 version: Version::new("1"),
                 up: "".into(),
+                record: true,
             }
         ),
         Err(StepError::EmptyUp(_))

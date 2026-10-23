@@ -5,8 +5,8 @@ use std::path::Path;
 
 use tqlmate::{
     check_strict_order, list_migration_files, new_migration_path, parse_migration,
-    parse_migration_body, parse_version_name, slugify, status_rows, Error, MigrationFile,
-    MigrationStatus, Version,
+    parse_migration_body, parse_migration_sections, parse_version_name, slugify, status_rows,
+    Error, MigrationFile, MigrationStatus, Version,
 };
 
 fn mf(version: &str) -> MigrationFile {
@@ -14,8 +14,7 @@ fn mf(version: &str) -> MigrationFile {
         version: Version::new(version),
         name: version.into(),
         path: format!("{version}.tql").into(),
-        up: String::new(),
-        down: String::new(),
+        sections: vec![(String::new(), String::new())],
     }
 }
 
@@ -123,8 +122,9 @@ fn parse_migration_from_disk() {
     )
     .unwrap();
     let m = parse_migration(&path).unwrap();
-    assert_eq!(m.up, "define entity x;");
-    assert_eq!(m.down, "undefine entity x;");
+    assert_eq!(m.up(), "define entity x;");
+    assert_eq!(m.down(), "undefine entity x;");
+    assert_eq!(m.sections.len(), 1);
     assert_eq!(m.label(), "20240101120000_demo");
 }
 
@@ -138,8 +138,45 @@ fn parser_handles_crlf_on_disk() {
     )
     .unwrap();
     let m = parse_migration(&path).unwrap();
-    assert_eq!(m.up, "define entity crlf;");
-    assert_eq!(m.down, "undefine entity crlf;");
+    assert_eq!(m.up(), "define entity crlf;");
+    assert_eq!(m.down(), "undefine entity crlf;");
+}
+
+#[test]
+fn multi_section_parse_and_legacy_concat() {
+    let text = "\
+-- migrate:up
+define entity a;
+
+-- migrate:down
+undefine entity a;
+
+-- migrate:up
+define entity b;
+
+-- migrate:down
+undefine entity b;
+";
+    let sections = parse_migration_sections(text).unwrap();
+    assert_eq!(sections.len(), 2);
+    assert_eq!(sections[0].0, "define entity a;");
+    assert_eq!(sections[0].1, "undefine entity a;");
+    assert_eq!(sections[1].0, "define entity b;");
+    assert_eq!(sections[1].1, "undefine entity b;");
+
+    // Legacy concat API still joins in file order (not reverse).
+    let (u, d) = parse_migration_body(text).unwrap();
+    assert_eq!(u, "define entity a;\n\ndefine entity b;");
+    assert_eq!(d, "undefine entity a;\n\nundefine entity b;");
+}
+
+#[test]
+fn multi_section_missing_down_errors() {
+    let text = "-- migrate:up\nA;\n-- migrate:up\nB;\n-- migrate:down\nb;\n";
+    assert!(matches!(
+        parse_migration_sections(text),
+        Err(Error::MigrationSectionMissingDown)
+    ));
 }
 
 #[test]

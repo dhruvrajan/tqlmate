@@ -287,19 +287,25 @@ async fn apply_up(
     database: &str,
     version: &Version,
     up: &str,
+    record: bool,
     verbose: bool,
 ) -> Result<()> {
-    // Effect axiom (trusted): on success, abstract State gains `version`.
+    // Effect axiom (trusted): on success with `record`, abstract State gains `version`.
+    // Intermediate multi-section ups commit schema without touching the ledger.
     // Empty-up rejection is decided in [`pure::plan_migrate`]; keep a guard here.
     if pure::body_is_empty(up) {
         return Err(Error::EmptyUp(version.clone()));
     }
-    let applied_at = chrono::Utc::now().format("%Y-%m-%dT%H:%M:%S").to_string();
-    let insert = ledger::record_insert(version, &applied_at);
     if verbose {
         eprintln!("-> up {version}");
     }
-    schema_queries(driver, database, &[up, insert.as_str()]).await
+    if record {
+        let applied_at = chrono::Utc::now().format("%Y-%m-%dT%H:%M:%S").to_string();
+        let insert = ledger::record_insert(version, &applied_at);
+        schema_queries(driver, database, &[up, insert.as_str()]).await
+    } else {
+        schema_queries(driver, database, &[up]).await
+    }
 }
 
 async fn apply_down(
@@ -307,20 +313,26 @@ async fn apply_down(
     database: &str,
     version: &Version,
     down: &str,
+    delete_record: bool,
     verbose: bool,
 ) -> Result<()> {
-    // Effect axiom (trusted): on success, abstract State drops last matching `version`.
+    // Effect axiom (trusted): on success with `delete_record`, abstract State
+    // drops last matching `version`. Intermediate downs only run schema.
     if pure::body_is_empty(down) {
         return Err(Error::EmptyDown {
             version: version.clone(),
             name: String::new(),
         });
     }
-    let delete = ledger::record_delete(version);
     if verbose {
         eprintln!("-> down {version}");
     }
-    schema_queries(driver, database, &[down, delete.as_str()]).await
+    if delete_record {
+        let delete = ledger::record_delete(version);
+        schema_queries(driver, database, &[down, delete.as_str()]).await
+    } else {
+        schema_queries(driver, database, &[down]).await
+    }
 }
 
 fn map_plan_error(err: PlanError) -> Error {
@@ -344,8 +356,14 @@ fn files_to_specs(files: &[MigrationFile]) -> Vec<pure::MigrationSpec> {
         .map(|f| pure::MigrationSpec {
             version: f.version.clone(),
             name: f.name.clone(),
-            up: f.up.clone(),
-            down: f.down.clone(),
+            sections: f
+                .sections
+                .iter()
+                .map(|(up, down)| pure::MigrationSection {
+                    up: up.clone(),
+                    down: down.clone(),
+                })
+                .collect(),
         })
         .collect()
 }
@@ -367,7 +385,12 @@ pub fn plan_rollback_files(files: &[MigrationFile], applied: &[Version]) -> Resu
 }
 
 /// Execute a plan against TypeDB. **Trusted effect layer:** success ⇒ abstract
-/// [`State`] transition; failure ⇒ ledger unchanged (schema tx abort).
+/// [`State`] transition for ops with `record`/`delete`; failure ⇒ that section's
+/// schema transaction aborts (earlier committed sections stay applied; the
+/// ledger version is written only with the final successful section — same as
+/// dbmate multi-section partial failure).
+///
+/// `Applied:` / `Rolled back:` print only after the file's final section succeeds.
 async fn execute_plan(
     driver: &TypeDBDriver,
     database: &str,
@@ -377,23 +400,35 @@ async fn execute_plan(
 ) -> Result<()> {
     for op in plan {
         match op {
-            Op::ApplyUp { version, up } => {
-                apply_up(driver, database, version, up, verbose).await?;
-                let label = files
-                    .iter()
-                    .find(|f| &f.version == version)
-                    .map(|f| f.label())
-                    .unwrap_or_else(|| version.as_str().to_string());
-                println!("Applied: {label}");
+            Op::ApplyUp {
+                version,
+                up,
+                record,
+            } => {
+                apply_up(driver, database, version, up, *record, verbose).await?;
+                if *record {
+                    let label = files
+                        .iter()
+                        .find(|f| &f.version == version)
+                        .map(|f| f.label())
+                        .unwrap_or_else(|| version.as_str().to_string());
+                    println!("Applied: {label}");
+                }
             }
-            Op::ApplyDown { version, down } => {
-                apply_down(driver, database, version, down, verbose).await?;
-                let label = files
-                    .iter()
-                    .find(|f| &f.version == version)
-                    .map(|f| f.label())
-                    .unwrap_or_else(|| version.as_str().to_string());
-                println!("Rolled back: {label}");
+            Op::ApplyDown {
+                version,
+                down,
+                delete,
+            } => {
+                apply_down(driver, database, version, down, *delete, verbose).await?;
+                if *delete {
+                    let label = files
+                        .iter()
+                        .find(|f| &f.version == version)
+                        .map(|f| f.label())
+                        .unwrap_or_else(|| version.as_str().to_string());
+                    println!("Rolled back: {label}");
+                }
             }
         }
     }

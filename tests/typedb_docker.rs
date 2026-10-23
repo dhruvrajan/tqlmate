@@ -332,3 +332,121 @@ async fn empty_up_fails_without_recording() {
     );
     runner.drop().await.expect("drop");
 }
+
+#[tokio::test]
+async fn multi_section_migrate_records_once_and_rollback_reverses() {
+    let typedb = shared_typedb().await;
+    let url = typedb.url_for(&unique_db("tqlmate_multi"));
+    let tmp = tempfile::tempdir().unwrap();
+    let migrations = tmp.path().join("migrations");
+    let schema = tmp.path().join("schema.tql");
+    std::fs::create_dir_all(&migrations).unwrap();
+
+    // Two schema sections in one file (separate TypeDB SCHEMA txs); version once.
+    write_migration(
+        &migrations,
+        "20240101000000_multi.tql",
+        "-- migrate:up\n\
+         define\n\
+           entity alpha;\n\
+         \n\
+         -- migrate:down\n\
+         undefine\n\
+           alpha;\n\
+         \n\
+         -- migrate:up\n\
+         define\n\
+           entity beta;\n\
+         \n\
+         -- migrate:down\n\
+         undefine\n\
+           beta;\n",
+    );
+
+    let mut runner = Runner::new(opts(url, migrations.clone(), schema.clone()));
+    let _ = runner.drop().await;
+    runner.create().await.expect("create");
+    runner.migrate().await.expect("migrate multi-section");
+    assert!(
+        !runner.status(true).await.expect("status"),
+        "multi-section file should be recorded once"
+    );
+
+    runner.dump().await.expect("dump");
+    let dump = std::fs::read_to_string(&schema).expect("read dump");
+    assert!(
+        dump.contains("20240101000000_multi"),
+        "version listed once: {dump}"
+    );
+    assert!(dump.contains("alpha") && dump.contains("beta"), "{dump}");
+
+    runner.rollback().await.expect("rollback multi-section");
+    assert!(
+        runner.status(true).await.expect("status after rollback"),
+        "file should be pending after rollback"
+    );
+    runner.dump().await.expect("dump after rollback");
+    let dump2 = std::fs::read_to_string(&schema).expect("read dump2");
+    assert!(
+        !dump2.contains("20240101000000_multi"),
+        "rolled-back version must not appear: {dump2}"
+    );
+    assert!(
+        !dump2.contains("entity alpha") && !dump2.contains("entity beta"),
+        "both section types should be gone (downs reverse): {dump2}"
+    );
+
+    runner.drop().await.expect("drop");
+}
+
+#[tokio::test]
+async fn multi_section_partial_failure_leaves_earlier_schema_unrecorded() {
+    let typedb = shared_typedb().await;
+    let url = typedb.url_for(&unique_db("tqlmate_partial"));
+    let tmp = tempfile::tempdir().unwrap();
+    let migrations = tmp.path().join("migrations");
+    let schema = tmp.path().join("schema.tql");
+    std::fs::create_dir_all(&migrations).unwrap();
+
+    write_migration(
+        &migrations,
+        "20240101000000_partial.tql",
+        "-- migrate:up\n\
+         define\n\
+           entity ok_type;\n\
+         \n\
+         -- migrate:down\n\
+         undefine\n\
+           ok_type;\n\
+         \n\
+         -- migrate:up\n\
+         define\n\
+           this is not valid typeql !!!\n\
+         \n\
+         -- migrate:down\n\
+         undefine\n\
+           ok_type;\n",
+    );
+
+    let mut runner = Runner::new(opts(url, migrations, schema.clone()));
+    let _ = runner.drop().await;
+    runner.create().await.expect("create");
+    assert!(runner.migrate().await.is_err(), "second section must fail");
+    assert!(
+        runner.status(true).await.expect("status"),
+        "version must not be recorded on partial failure"
+    );
+    runner.dump().await.expect("dump");
+    let dump = std::fs::read_to_string(&schema).expect("read dump");
+    assert!(
+        !dump.contains("20240101000000_partial"),
+        "failed file must not appear as applied: {dump}"
+    );
+    // First section's schema tx committed (dbmate/TypeDB: no cross-section rollback).
+    assert!(
+        dump.contains("ok_type"),
+        "earlier section schema remains after later failure: {dump}"
+    );
+
+    runner.drop().await.expect("drop");
+}

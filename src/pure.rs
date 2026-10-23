@@ -65,6 +65,12 @@ pub enum ParseError {
     VersionDigits,
     Name,
     Markers,
+    /// Multi-section file: a `-- migrate:up` block has no following `-- migrate:down`.
+    SectionMissingDown,
+    /// Multi-section file: `-- migrate:down` appears before `-- migrate:up` in a section.
+    SectionWrongOrder,
+    /// Multi-section file: more than one `-- migrate:down` in a single section.
+    SectionMultipleDown,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -246,8 +252,50 @@ pub fn parse_version_name(filename: &str) -> Result<(Version, String), ParseErro
     Ok((Version::new(version), rest.to_string()))
 }
 
+/// One `(up, down)` pair inside a migration file (dbmate multi-section unit).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct MigrationSection {
+    pub up: String,
+    pub down: String,
+}
+
+/// Count `-- migrate:up` markers (case-insensitive).
+fn count_up_markers(text: &str) -> usize {
+    let bytes = text.as_bytes();
+    let mut n = 0usize;
+    let mut i = 0;
+    while i <= bytes.len() {
+        let start = i;
+        while i < bytes.len() && bytes[i] != b'\n' {
+            i += 1;
+        }
+        let mut end = i;
+        if end > start && bytes[end - 1] == b'\r' {
+            end -= 1;
+        }
+        let line = &text[start..end];
+        if let Some(Section::Up) = migration_marker(line) {
+            n += 1;
+        }
+        if i < bytes.len() {
+            i += 1;
+        } else {
+            break;
+        }
+    }
+    n
+}
+
 /// Split migration file text into `(up, down)` bodies.
+///
+/// Single-section files (≤1 `migrate:up`) keep the historical permissive
+/// concat behaviour. Prefer [`parse_sections`] when executing migrations.
 pub fn split_up_down(text: &str) -> Result<(String, String), ParseError> {
+    split_up_down_concat(text)
+}
+
+/// Historical line scan: every up line goes into one up body, every down into one down.
+fn split_up_down_concat(text: &str) -> Result<(String, String), ParseError> {
     let mut section = None::<Section>;
     let mut up = String::new();
     let mut down = String::new();
@@ -294,6 +342,139 @@ pub fn split_up_down(text: &str) -> Result<(String, String), ParseError> {
         return Err(ParseError::Markers);
     }
     Ok((trim_owned(up), trim_owned(down)))
+}
+
+/// Parse migration file text into ordered `(up, down)` sections (dbmate v2.37+).
+///
+/// * **≤1 `migrate:up`:** same permissive rules as [`split_up_down`] (one section).
+/// * **≥2 `migrate:up`:** each section is `migrate:up` … next `migrate:up` / EOF;
+///   every section must contain exactly one `migrate:down` after its `migrate:up`.
+pub fn parse_sections(text: &str) -> Result<Vec<MigrationSection>, ParseError> {
+    if count_up_markers(text) <= 1 {
+        let (up, down) = split_up_down_concat(text)?;
+        let mut out = Vec::new();
+        out.push(MigrationSection { up, down });
+        return Ok(out);
+    }
+    parse_multi_sections(text)
+}
+
+/// dbmate-style multi-section parse (≥2 `migrate:up` markers).
+fn parse_multi_sections(text: &str) -> Result<Vec<MigrationSection>, ParseError> {
+    // Collect byte starts of each `migrate:up` line.
+    let bytes = text.as_bytes();
+    let mut up_starts: Vec<usize> = Vec::new();
+    let mut i = 0;
+    while i <= bytes.len() {
+        let start = i;
+        while i < bytes.len() && bytes[i] != b'\n' {
+            i += 1;
+        }
+        let mut end = i;
+        if end > start && bytes[end - 1] == b'\r' {
+            end -= 1;
+        }
+        let line = &text[start..end];
+        if let Some(Section::Up) = migration_marker(line) {
+            up_starts.push(start);
+        }
+        if i < bytes.len() {
+            i += 1;
+        } else {
+            break;
+        }
+    }
+    if up_starts.is_empty() {
+        return Err(ParseError::Markers);
+    }
+
+    let mut sections: Vec<MigrationSection> = Vec::new();
+    let mut s_i = 0;
+    while s_i < up_starts.len() {
+        let begin = up_starts[s_i];
+        let end = if s_i + 1 < up_starts.len() {
+            up_starts[s_i + 1]
+        } else {
+            text.len()
+        };
+        let chunk = &text[begin..end];
+        sections.push(parse_one_multi_section(chunk)?);
+        s_i += 1;
+    }
+    Ok(sections)
+}
+
+/// Parse one section substring that begins at its `migrate:up` marker.
+fn parse_one_multi_section(chunk: &str) -> Result<MigrationSection, ParseError> {
+    let mut section = None::<Section>;
+    let mut up = String::new();
+    let mut down = String::new();
+    let mut saw_up = false;
+    let mut saw_down = false;
+
+    let bytes = chunk.as_bytes();
+    let mut i = 0;
+    while i <= bytes.len() {
+        let start = i;
+        while i < bytes.len() && bytes[i] != b'\n' {
+            i += 1;
+        }
+        let mut end = i;
+        if end > start && bytes[end - 1] == b'\r' {
+            end -= 1;
+        }
+        let line = &chunk[start..end];
+        if let Some(marker) = migration_marker(line) {
+            match marker {
+                Section::Up => {
+                    if saw_up {
+                        // Should not happen: multi split is at up boundaries.
+                        return Err(ParseError::SectionWrongOrder);
+                    }
+                    section = Some(Section::Up);
+                    saw_up = true;
+                }
+                Section::Down => {
+                    if !saw_up {
+                        return Err(ParseError::SectionWrongOrder);
+                    }
+                    if saw_down {
+                        return Err(ParseError::SectionMultipleDown);
+                    }
+                    section = Some(Section::Down);
+                    saw_down = true;
+                }
+            }
+        } else {
+            match section {
+                Some(Section::Up) => {
+                    up.push_str(line);
+                    up.push('\n');
+                }
+                Some(Section::Down) => {
+                    down.push_str(line);
+                    down.push('\n');
+                }
+                None => {}
+            }
+        }
+        if i < bytes.len() {
+            i += 1;
+        } else {
+            break;
+        }
+    }
+
+    if !saw_up {
+        return Err(ParseError::Markers);
+    }
+    if !saw_down {
+        return Err(ParseError::SectionMissingDown);
+    }
+    Ok(MigrationSection {
+        up: trim_owned(up),
+        down: trim_owned(down),
+    })
 }
 
 fn trim_owned(s: String) -> String {
@@ -538,8 +719,9 @@ fn find_label(files: &[MigrationId], v: &Version) -> Option<String> {
 pub struct MigrationSpec {
     pub version: Version,
     pub name: String,
-    pub up: String,
-    pub down: String,
+    /// Ordered `(up, down)` sections. Ledger version is recorded once after the
+    /// last up section; rollback runs downs last-to-first and deletes once.
+    pub sections: Vec<MigrationSection>,
 }
 
 impl MigrationSpec {
@@ -550,13 +732,35 @@ impl MigrationSpec {
         out.push_str(&self.name);
         out
     }
+
+    /// Single-section convenience (tests / simple fixtures).
+    pub fn single(version: Version, name: String, up: String, down: String) -> Self {
+        let mut sections = Vec::new();
+        sections.push(MigrationSection { up, down });
+        Self {
+            version,
+            name,
+            sections,
+        }
+    }
 }
 
 /// One planned schema effect (executed by the trusted TypeDB runner).
+///
+/// `record` / `delete` are true only on the last section of a file so the
+/// ledger version is written or removed once (dbmate v2.37.0).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Op {
-    ApplyUp { version: Version, up: String },
-    ApplyDown { version: Version, down: String },
+    ApplyUp {
+        version: Version,
+        up: String,
+        record: bool,
+    },
+    ApplyDown {
+        version: Version,
+        down: String,
+        delete: bool,
+    },
 }
 
 /// Ordered list of ops produced by [`plan_migrate`] / [`plan_rollback`].
@@ -626,25 +830,45 @@ fn find_spec<'a>(files: &'a [MigrationSpec], v: &Version) -> Option<&'a Migratio
     None
 }
 
-/// Apply one op to abstract state: `ApplyUp` appends; `ApplyDown` removes last match.
+/// Apply one op to abstract state.
 ///
-/// Takes ownership so successful `ApplyUp` is a pure `Vec::push` (no clone loop).
+/// `ApplyUp` with `record` appends the version; without `record` the abstract
+/// ledger is unchanged (intermediate multi-section body). Symmetrically,
+/// `ApplyDown` with `delete` removes the last matching version.
+///
+/// Takes ownership so successful recording `ApplyUp` is a pure `Vec::push`.
 pub fn step(state: State, op: Op) -> Result<State, StepError> {
     match op {
-        Op::ApplyUp { version, up } => {
+        Op::ApplyUp {
+            version,
+            up,
+            record,
+        } => {
             if body_is_empty(&up) {
                 return Err(StepError::EmptyUp(version));
             }
-            let mut applied = state.applied;
-            applied.push(version);
-            Ok(State { applied })
+            if record {
+                let mut applied = state.applied;
+                applied.push(version);
+                Ok(State { applied })
+            } else {
+                Ok(state)
+            }
         }
-        Op::ApplyDown { version, down } => {
+        Op::ApplyDown {
+            version,
+            down,
+            delete,
+        } => {
             if body_is_empty(&down) {
                 return Err(StepError::EmptyDown(version));
             }
-            let applied = remove_last_matching(&state.applied, &version);
-            Ok(State { applied })
+            if delete {
+                let applied = remove_last_matching(&state.applied, &version);
+                Ok(State { applied })
+            } else {
+                Ok(state)
+            }
         }
     }
 }
@@ -711,19 +935,31 @@ pub fn pending_specs(files: &[MigrationSpec], applied: &[Version]) -> Vec<Migrat
     out
 }
 
-/// Build ApplyUp ops from pending specs; reject empty ups.
+/// Build ApplyUp ops from pending specs; one op per section; reject empty ups.
+///
+/// `record` is set only on the last section of each file.
 fn plan_ups_from_pending(pending: &[MigrationSpec]) -> Result<Plan, PlanError> {
     let mut plan: Plan = Vec::new();
     let mut i = 0;
     while i < pending.len() {
         let f = &pending[i];
-        if body_is_empty(&f.up) {
+        if f.sections.is_empty() {
             return Err(PlanError::EmptyUp(f.version.clone()));
         }
-        plan.push(Op::ApplyUp {
-            version: f.version.clone(),
-            up: f.up.clone(),
-        });
+        let mut j = 0;
+        while j < f.sections.len() {
+            let up = &f.sections[j].up;
+            if body_is_empty(up) {
+                return Err(PlanError::EmptyUp(f.version.clone()));
+            }
+            let record = j + 1 == f.sections.len();
+            plan.push(Op::ApplyUp {
+                version: f.version.clone(),
+                up: up.clone(),
+                record,
+            });
+            j += 1;
+        }
         i += 1;
     }
     Ok(plan)
@@ -755,9 +991,10 @@ pub fn plan_migrate(
     plan_ups_from_pending(&pending)
 }
 
-/// Plan a single down for the last applied version (or empty plan if none applied).
+/// Plan downs for the last applied version (or empty plan if none applied).
 ///
-/// Rejects missing migration file and empty `down` body.
+/// Down sections run last-to-first; `delete` is set only on the final op
+/// (first section in the file). Rejects missing file and empty down bodies.
 pub fn plan_rollback(files: &[MigrationSpec], applied: &[Version]) -> Result<Plan, PlanError> {
     if applied.is_empty() {
         return Ok(Vec::new());
@@ -767,17 +1004,31 @@ pub fn plan_rollback(files: &[MigrationSpec], applied: &[Version]) -> Result<Pla
         Some(m) => m,
         None => return Err(PlanError::MissingFile(version)),
     };
-    if body_is_empty(&m.down) {
+    if m.sections.is_empty() {
         return Err(PlanError::EmptyDown {
             version: m.version.clone(),
             name: m.name.clone(),
         });
     }
     let mut plan: Plan = Vec::new();
-    plan.push(Op::ApplyDown {
-        version: m.version.clone(),
-        down: m.down.clone(),
-    });
+    // Reverse order: last section first.
+    let mut j = m.sections.len();
+    while j > 0 {
+        j -= 1;
+        let down = &m.sections[j].down;
+        if body_is_empty(down) {
+            return Err(PlanError::EmptyDown {
+                version: m.version.clone(),
+                name: m.name.clone(),
+            });
+        }
+        let delete = j == 0;
+        plan.push(Op::ApplyDown {
+            version: m.version.clone(),
+            down: down.clone(),
+            delete,
+        });
+    }
     Ok(plan)
 }
 
@@ -923,11 +1174,28 @@ mod tests {
     }
 
     fn spec(version: &str, up: &str, down: &str) -> MigrationSpec {
+        MigrationSpec::single(
+            Version::new(version),
+            version.into(),
+            up.into(),
+            down.into(),
+        )
+    }
+
+    fn multi(version: &str, sections: &[(&str, &str)]) -> MigrationSpec {
+        let mut secs = Vec::new();
+        let mut i = 0;
+        while i < sections.len() {
+            secs.push(MigrationSection {
+                up: sections[i].0.into(),
+                down: sections[i].1.into(),
+            });
+            i += 1;
+        }
         MigrationSpec {
             version: Version::new(version),
             name: version.into(),
-            up: up.into(),
-            down: down.into(),
+            sections: secs,
         }
     }
 
@@ -1025,6 +1293,7 @@ mod tests {
                 Op::ApplyUp {
                     version: Version::new("1"),
                     up: "  \n".into(),
+                    record: true,
                 }
             ),
             Err(StepError::EmptyUp(_))
@@ -1035,9 +1304,98 @@ mod tests {
                 Op::ApplyDown {
                     version: Version::new("1"),
                     down: "".into(),
+                    delete: true,
                 }
             ),
             Err(StepError::EmptyDown(_))
         ));
+    }
+
+    #[test]
+    fn parse_sections_single_matches_split() {
+        let text = "-- migrate:up\ndefine entity x;\n\n-- migrate:down\nundefine entity x;\n";
+        let (u, d) = split_up_down(text).unwrap();
+        let secs = parse_sections(text).unwrap();
+        assert_eq!(secs.len(), 1);
+        assert_eq!(secs[0].up, u);
+        assert_eq!(secs[0].down, d);
+    }
+
+    #[test]
+    fn parse_sections_multi_keeps_pairs() {
+        let text = "\
+-- migrate:up
+define entity a;
+
+-- migrate:down
+undefine entity a;
+
+-- migrate:up
+define entity b;
+
+-- migrate:down
+undefine entity b;
+";
+        let secs = parse_sections(text).unwrap();
+        assert_eq!(secs.len(), 2);
+        assert_eq!(secs[0].up, "define entity a;");
+        assert_eq!(secs[0].down, "undefine entity a;");
+        assert_eq!(secs[1].up, "define entity b;");
+        assert_eq!(secs[1].down, "undefine entity b;");
+        // Legacy concat still joins in file order (not reverse).
+        let (u, d) = split_up_down(text).unwrap();
+        assert_eq!(u, "define entity a;\n\ndefine entity b;");
+        assert_eq!(d, "undefine entity a;\n\nundefine entity b;");
+    }
+
+    #[test]
+    fn parse_sections_multi_rejects_missing_down() {
+        let text = "-- migrate:up\nA;\n-- migrate:up\nB;\n-- migrate:down\nb;\n";
+        assert_eq!(parse_sections(text), Err(ParseError::SectionMissingDown));
+    }
+
+    #[test]
+    fn plan_multi_section_records_once_rollback_reverses() {
+        let files = vec![multi("1", &[("u1", "d1"), ("u2", "d2")])];
+        let plan = plan_migrate(&files, &[], false).unwrap();
+        assert_eq!(plan.len(), 2);
+        assert!(matches!(
+            &plan[0],
+            Op::ApplyUp {
+                up,
+                record: false,
+                ..
+            } if up == "u1"
+        ));
+        assert!(matches!(
+            &plan[1],
+            Op::ApplyUp {
+                up,
+                record: true,
+                ..
+            } if up == "u2"
+        ));
+        let next = run(State::empty(), &plan).unwrap();
+        assert_eq!(next.applied, vec![Version::new("1")]);
+
+        let down = plan_rollback(&files, &next.applied).unwrap();
+        assert_eq!(down.len(), 2);
+        assert!(matches!(
+            &down[0],
+            Op::ApplyDown {
+                down,
+                delete: false,
+                ..
+            } if down == "d2"
+        ));
+        assert!(matches!(
+            &down[1],
+            Op::ApplyDown {
+                down,
+                delete: true,
+                ..
+            } if down == "d1"
+        ));
+        assert!(run(next, &down).unwrap().applied.is_empty());
     }
 }

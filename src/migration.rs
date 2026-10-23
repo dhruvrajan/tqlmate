@@ -35,13 +35,23 @@ pub struct MigrationFile {
     pub version: Version,
     pub name: String,
     pub path: PathBuf,
-    pub up: String,
-    pub down: String,
+    /// Ordered `(up, down)` sections (dbmate multi-section).
+    pub sections: Vec<(String, String)>,
 }
 
 impl MigrationFile {
     pub fn label(&self) -> String {
         format!("{}_{}", self.version, self.name)
+    }
+
+    /// First section up body (single-section files; ledger helpers).
+    pub fn up(&self) -> &str {
+        self.sections.first().map(|(u, _)| u.as_str()).unwrap_or("")
+    }
+
+    /// First section down body.
+    pub fn down(&self) -> &str {
+        self.sections.first().map(|(_, d)| d.as_str()).unwrap_or("")
     }
 
     fn id(&self) -> MigrationId {
@@ -59,6 +69,9 @@ fn map_parse(err: ParseError, filename: &str) -> Error {
         ParseError::VersionDigits => Error::MigrationVersionDigits(filename.to_string()),
         ParseError::Name => Error::MigrationName(filename.to_string()),
         ParseError::Markers => Error::MigrationMarkers,
+        ParseError::SectionMissingDown => Error::MigrationSectionMissingDown,
+        ParseError::SectionWrongOrder => Error::MigrationSectionWrongOrder,
+        ParseError::SectionMultipleDown => Error::MigrationSectionMultipleDown,
     }
 }
 
@@ -73,23 +86,31 @@ pub fn parse_migration(path: &Path) -> Result<MigrationFile> {
         .ok_or_else(|| Error::msg("invalid migration filename"))?;
     let (version, name) = parse_version_name(filename)?;
     let text = fs::read_to_string(path)?;
-    let (up, down) = split_up_down(&text)?;
+    let sections = parse_sections(&text)?;
     Ok(MigrationFile {
         version,
         name,
         path: path.to_path_buf(),
-        up,
-        down,
+        sections,
     })
 }
 
 /// Split migration file text into `(up, down)` bodies (no TypeDB I/O).
+///
+/// Single-section / legacy concat API. Prefer [`parse_migration_sections`] for
+/// multi-section files.
 pub fn parse_migration_body(text: &str) -> Result<(String, String)> {
-    split_up_down(text)
+    pure::split_up_down(text).map_err(|e| map_parse(e, ""))
 }
 
-fn split_up_down(text: &str) -> Result<(String, String)> {
-    pure::split_up_down(text).map_err(|e| map_parse(e, ""))
+/// Parse ordered `(up, down)` sections (dbmate v2.37 multi-section semantics).
+pub fn parse_migration_sections(text: &str) -> Result<Vec<(String, String)>> {
+    parse_sections(text)
+}
+
+fn parse_sections(text: &str) -> Result<Vec<(String, String)>> {
+    let sections = pure::parse_sections(text).map_err(|e| map_parse(e, ""))?;
+    Ok(sections.into_iter().map(|s| (s.up, s.down)).collect())
 }
 
 pub fn list_migration_files(dir: &Path) -> Result<Vec<MigrationFile>> {

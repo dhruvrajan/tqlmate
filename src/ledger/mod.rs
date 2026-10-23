@@ -90,8 +90,7 @@ fn parse_embedded(filename: &str, text: &str) -> Result<MigrationFile> {
         version,
         name,
         path: PathBuf::from(format!("embedded:{filename}")),
-        up,
-        down,
+        sections: vec![(up, down)],
     })
 }
 
@@ -135,7 +134,7 @@ pub fn bootstrap_schema() -> String {
     shipped_ledger_migrations()
         .expect("shipped ledger migrations must parse")
         .iter()
-        .map(|m| m.up.as_str())
+        .map(|m| m.up().to_string())
         .collect::<Vec<_>>()
         .join("\n")
 }
@@ -167,7 +166,7 @@ pub async fn ensure(driver: &TypeDBDriver, database: &str) -> Result<()> {
 async fn apply_ledger_up(driver: &TypeDBDriver, database: &str, m: &MigrationFile) -> Result<()> {
     let applied_at = chrono::Utc::now().format("%Y-%m-%dT%H:%M:%S").to_string();
     let insert = record_insert(&m.version, &applied_at);
-    schema_queries(driver, database, &[m.up.as_str(), insert.as_str()]).await
+    schema_queries(driver, database, &[m.up(), insert.as_str()]).await
 }
 
 async fn stamp_ledger(driver: &TypeDBDriver, database: &str, version: &Version) -> Result<()> {

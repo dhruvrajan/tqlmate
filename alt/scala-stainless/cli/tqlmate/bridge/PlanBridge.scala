@@ -7,8 +7,8 @@ import tqlmate.core.Pure._
 
 sealed trait BridgeOp
 object BridgeOp {
-  case class ApplyUp(version: String, up: String) extends BridgeOp
-  case class ApplyDown(version: String, down: String) extends BridgeOp
+  case class ApplyUp(version: String, up: String, record: Boolean) extends BridgeOp
+  case class ApplyDown(version: String, down: String, delete: Boolean) extends BridgeOp
 }
 
 sealed trait BridgePlanError
@@ -59,14 +59,18 @@ object PlanBridge {
   }
 
   private def toOps(plan: List[Op]): Seq[BridgeOp] = plan.toScala.map {
-    case ApplyUp(v, up) => BridgeOp.ApplyUp(Codec.versionStr(v), Codec.fromCodes(up))
-    case ApplyDown(v, down) => BridgeOp.ApplyDown(Codec.versionStr(v), Codec.fromCodes(down))
+    case ApplyUp(v, up, record) =>
+      BridgeOp.ApplyUp(Codec.versionStr(v), Codec.fromCodes(up), record)
+    case ApplyDown(v, down, delete) =>
+      BridgeOp.ApplyDown(Codec.versionStr(v), Codec.fromCodes(down), delete)
   }
 
   private def fromOps(plan: Seq[BridgeOp]): List[Op] =
     List.fromScala(plan.map {
-      case BridgeOp.ApplyUp(v, up) => ApplyUp(Codec.version(v), Codec.toCodes(up))
-      case BridgeOp.ApplyDown(v, down) => ApplyDown(Codec.version(v), Codec.toCodes(down))
+      case BridgeOp.ApplyUp(v, up, record) =>
+        ApplyUp(Codec.version(v), Codec.toCodes(up), record)
+      case BridgeOp.ApplyDown(v, down, delete) =>
+        ApplyDown(Codec.version(v), Codec.toCodes(down), delete)
     }.toList)
 
   private def mapErr(e: PlanError): BridgePlanError = e match {

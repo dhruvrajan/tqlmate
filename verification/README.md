@@ -102,6 +102,19 @@ Honest claim: **core functional correctness under effect assumptions** — Lean
 checks plan+`run` on the Aeneas extract; TypeDB is an oracle matching those
 ops when effects succeed.
 
+### Gap (dbmate v2.37 multi-section)
+
+Production [`src/pure.rs`](../src/pure.rs) now models multi-section files:
+`parse_sections`, `MigrationSpec.sections`, and `Op::{record,delete}` so the
+ledger version is written/removed once per file. The **committed Aeneas extract**
+(`aeneas-generated/`) and `CoreProperties` still describe the pre-v2.37
+single-body `ApplyUp`/`ApplyDown` shape. ExtrProperties parse/split fixtures and
+`split_up_down` remain aligned via `tests/spec_parity.rs`. Regenerate the extract
+(and extend CoreProperties) when Charon/Aeneas are available; until then Lean
+verifies the older single-section extract, while Verus proves `record`/`delete`
+on the single-section planning subset (`record`/`delete` always true in
+`verification/verus` planners).
+
 ## Architecture
 
 ```

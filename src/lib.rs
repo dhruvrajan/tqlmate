@@ -16,12 +16,12 @@ pub use ledger::{
 };
 pub use migration::{
     check_strict_order, list_migration_files, migration_template, new_migration_path,
-    parse_migration, parse_migration_body, parse_version_name, slugify, status_rows, MigrationFile,
-    MigrationStatus, Version,
+    parse_migration, parse_migration_body, parse_migration_sections, parse_version_name, slugify,
+    status_rows, MigrationFile, MigrationStatus, Version,
 };
 pub use pure::{
-    body_is_empty, pending_specs, plan_migrate, plan_rollback, plan_status, run, step,
-    MigrationSpec, Op, Plan, PlanError, State, StepError,
+    body_is_empty, parse_sections, pending_specs, plan_migrate, plan_rollback, plan_status, run,
+    split_up_down, step, MigrationSection, MigrationSpec, Op, Plan, PlanError, State, StepError,
 };
 pub use runner::{
     abstract_run, default_migrations_dir, default_schema_file, plan_migrate_files,
@@ -64,6 +64,15 @@ pub enum Error {
 
     #[error("migration missing -- migrate:up / -- migrate:down")]
     MigrationMarkers,
+
+    #[error("multi-section migration: each -- migrate:up must be followed by -- migrate:down")]
+    MigrationSectionMissingDown,
+
+    #[error("multi-section migration: -- migrate:up must appear before -- migrate:down")]
+    MigrationSectionWrongOrder,
+
+    #[error("multi-section migration: at most one -- migrate:down per section")]
+    MigrationSectionMultipleDown,
 
     #[error("duplicate migration version {0}")]
     DuplicateVersion(Version),

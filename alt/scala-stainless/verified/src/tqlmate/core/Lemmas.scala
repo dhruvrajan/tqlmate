@@ -29,7 +29,7 @@ object Lemmas {
     require(!bodyIsEmpty(up))
     require(!bodyIsEmpty(down))
     val state0 = State(Nil[Version]())
-    val mid = step(state0, ApplyUp(v, up))
+    val mid = step(state0, ApplyUp(v, up, true))
     check(mid.isRight)
     val state1 = mid match {
       case Right(s) => s
@@ -37,7 +37,7 @@ object Lemmas {
     }
     check(state1.applied == Cons(v, Nil[Version]()))
     check(removeLastMatchingSpec(state1.applied, v) == Nil[Version]())
-    val end = step(state1, ApplyDown(v, down))
+    val end = step(state1, ApplyDown(v, down, true))
     check(end.isRight)
     end match {
       case Right(s) => s
@@ -47,7 +47,7 @@ object Lemmas {
 
   def runOneApplyUpAppends(state: State, v: Version, up: Codes): Either[StepError, State] = {
     require(!bodyIsEmpty(up))
-    step(state, ApplyUp(v, up))
+    step(state, ApplyUp(v, up, true))
   }.ensuring(res =>
     res match {
       case Right(s) => s.applied == (state.applied :+ v)
@@ -129,7 +129,7 @@ object Lemmas {
   def applyUpRecordsVersion(state: State, v: Version, up: Codes): Boolean = {
     require(!bodyIsEmpty(up))
     check(versionInSnoc(state.applied, v))
-    step(state, ApplyUp(v, up)) match {
+    step(state, ApplyUp(v, up, true)) match {
       case Right(s) => versionIn(s.applied, v)
       case _ => false
     }

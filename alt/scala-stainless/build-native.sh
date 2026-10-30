@@ -41,7 +41,7 @@ export PATH="${JAVA_HOME}/bin:${PATH}"
 
 echo "==> Packaging assembly JAR"
 "$SCALA_CLI" --power package \
-  --scala 3.3.6 --jvm 21 \
+  --scala 3.3.9 --jvm 21 \
   --dependency com.typedb:typedb-driver:3.14.0 \
   --repository https://repo.typedb.com/public/public-release/maven/ \
   --resource-dirs "$ROOT/resources" \

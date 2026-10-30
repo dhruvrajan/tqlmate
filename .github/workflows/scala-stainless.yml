@@ -38,7 +38,7 @@ jobs:
     needs: stainless
     steps:
       - uses: actions/checkout@v7
-      - uses: coursier/cache-action@v6
+      - uses: coursier/cache-action@v9
       - name: Setup GraalVM 21
         uses: graalvm/setup-graalvm@v1
         with:

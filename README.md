@@ -1,8 +1,9 @@
 # tqlmate
 
 dbmate-style migration CLI for TypeDB 3.x. Behaviour tracks
-[dbmate v2.37.0](https://github.com/amacneil/dbmate/releases/tag/v2.37.0)
-where it maps cleanly onto TypeDB (multi-section files; no `--migration-lock`).
+[dbmate v2.38.1](https://github.com/amacneil/dbmate/releases/tag/v2.38.1)
+where it maps cleanly onto TypeDB (multi-section files; no `--migration-lock` /
+`--migration-application-name`).
 
 ## Install
 
@@ -44,7 +45,7 @@ Set via `--url` / `-u`, or `TYPEDB_URL` (alias `DATABASE_URL`). Optional `.env` 
 | `create` / `drop` | Create or delete the database |
 | `migrate` | Apply pending migrations |
 | `rollback` (`down`) | Roll back the latest applied migration |
-| `status` | List applied / pending (`--exit-code`, `--quiet`) |
+| `status` | List applied / pending / missing-file (`--exit-code`, `--quiet`, `--strict`) |
 | `dump` | Write live schema to `db/schema.tql` |
 | `load` | Load `db/schema.tql` into the database |
 | `wait` | Block until TypeDB accepts connections |
@@ -93,12 +94,26 @@ same trade-off as dbmate. Re-running migrate will retry the whole file.
 Single-section files (the common case) behave as before: one SCHEMA transaction
 bundles the body with the ledger insert/delete.
 
-`--strict` refuses pending migrations whose version is lower than an already-applied version.
+`--strict` refuses pending migrations whose version is lower than an already-applied
+version (on `up` / `migrate`). On `status`, it also fails when an applied migration
+has no file. On `rollback`, it fails when the most recently applied migration has
+no file (instead of rolling back an older one).
+
+`status` prints `[X]` applied, `[ ]` pending, and `[?] <version> (file not found)`
+for ledger rows with no matching file, then `Applied:` / `Pending:` counts.
+`--exit-code` returns 1 only when there are pending migrations (unchanged).
+
+Migration files are UTF-8. A UTF-8 byte order mark at the start of a file is
+ignored. UTF-16 and UTF-32 files are rejected with a conversion hint (same as
+dbmate v2.38).
 
 **`--migration-lock`:** not implemented. dbmate’s flag uses a PostgreSQL session
 advisory lock on the migrating connection. TypeDB has no equivalent session lock
 API; a ledger-row “lock” would not survive across the separate SCHEMA transactions
 used per section, and inventing one would be unsound. Do not pass a fake flag.
+
+**`--migration-application-name`:** not implemented. dbmate’s flag is PostgreSQL-only
+(`application_name` in `pg_stat_activity`). TypeDB has no equivalent.
 
 ## Notes
 

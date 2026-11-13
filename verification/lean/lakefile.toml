@@ -6,7 +6,7 @@ defaultTargets = ["TqlmateExtract"]
 [[require]]
 name = "aeneas"
 git = "https://github.com/AeneasVerif/aeneas"
-rev = "87cfe2f5d663afd0a1fba154d41178f7a4420bb2"
+rev = "0d21a9ec7bbbb110110cacc14464a47fd71c8705"
 subDir = "backends/lean"
 
 [[lean_lib]]

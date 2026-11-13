@@ -15,9 +15,10 @@ pub use ledger::{
     LEDGER_VERSION_PREFIX,
 };
 pub use migration::{
-    check_strict_order, list_migration_files, migration_template, new_migration_path,
+    applied_for_rollback, applied_without_files, check_missing_applied_files, check_strict_order,
+    latest_applied_has_file, list_migration_files, migration_template, new_migration_path,
     parse_migration, parse_migration_body, parse_migration_sections, parse_version_name, slugify,
-    status_rows, MigrationFile, MigrationStatus, Version,
+    status_lines, status_rows, MigrationFile, MigrationStatus, StatusLine, Version,
 };
 pub use pure::{
     body_is_empty, parse_sections, pending_specs, plan_migrate, plan_rollback, plan_status, run,
@@ -96,6 +97,19 @@ pub enum Error {
 
     #[error("applied version {0} has no matching migration file")]
     MissingMigrationFile(Version),
+
+    /// `status --strict` / `rollback --strict` when an applied version has no file (dbmate v2.38).
+    #[error("can't find migration file for applied {kind} `{versions}` in --strict mode")]
+    MissingAppliedMigrationFile {
+        kind: &'static str,
+        versions: String,
+    },
+
+    /// `rollback --strict` when the most recently applied migration has no file (dbmate v2.38).
+    #[error(
+        "can't find migration file for applied migration `{0}`, can't rollback in --strict mode"
+    )]
+    MissingLatestMigrationFile(Version),
 
     #[error("schema file is empty")]
     EmptySchema,

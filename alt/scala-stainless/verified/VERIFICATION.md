@@ -10,7 +10,7 @@ Verified subset: `verified/src/tqlmate/core/{Codes,Pure,Lemmas}.scala`.
 STAINLESS_HOME=/path/to/stainless-dotty-standalone ./alt/scala-stainless/scripts/verify.sh
 ```
 
-Pin: Stainless **0.10.3** (`stainless-dotty-standalone`).
+Pin: Stainless **0.10.4** (`stainless-dotty-standalone`).
 
 ## Results (this checkout)
 

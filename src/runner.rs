@@ -5,8 +5,8 @@ use typedb_driver::{Addresses, Credentials, DriverOptions, DriverTlsConfig, Type
 
 use crate::ledger::{self, dump_header, schema_queries, strip_dump_header};
 use crate::migration::{
-    self, list_migration_files, new_migration_path, status_rows, MigrationFile, MigrationStatus,
-    Version,
+    self, list_migration_files, new_migration_path, status_lines, MigrationFile, MigrationStatus,
+    StatusLine, Version,
 };
 use crate::pure::{self, Op, Plan, PlanError, State};
 use crate::url::TypeDbUrl;
@@ -127,11 +127,22 @@ impl Runner {
         let db = self.database()?;
         let dir = self.opts.migrations_dir.clone();
         let verbose = self.opts.verbose;
+        let strict = self.opts.strict;
 
         let driver = self.connect().await?;
         ledger::ensure(driver, &db).await?;
         let files = list_migration_files(&dir)?;
         let applied = ledger::applied_versions(driver, &db).await?;
+        // dbmate v2.38: `--strict` fails when the most recently applied migration
+        // has no file, instead of rolling back an older one.
+        if strict {
+            if let Some(latest) = applied.last() {
+                if !migration::latest_applied_has_file(&files, &applied) {
+                    return Err(Error::MissingLatestMigrationFile(latest.clone()));
+                }
+            }
+        }
+        let applied = migration::applied_for_rollback(&files, &applied);
         let plan = plan_rollback_files(&files, &applied)?;
         if plan.is_empty() {
             if verbose {
@@ -156,24 +167,36 @@ impl Runner {
             Vec::new()
         };
         let files = list_migration_files(&dir)?;
-        if strict {
-            migration::check_strict_order(&files, &applied)?;
+        let lines = status_lines(&files, &applied);
+        let mut total_applied = 0usize;
+        let mut total_pending = 0usize;
+        for line in &lines {
+            match line {
+                StatusLine::File {
+                    status: MigrationStatus::Applied,
+                    ..
+                }
+                | StatusLine::MissingFile { .. } => total_applied += 1,
+                StatusLine::File {
+                    status: MigrationStatus::Pending,
+                    ..
+                } => total_pending += 1,
+            }
         }
-        let rows = status_rows(&files, &applied);
-        let pending = rows.iter().any(|(_, s)| *s == MigrationStatus::Pending);
         if !quiet {
-            for (m, status) in &rows {
-                let mark = match status {
-                    MigrationStatus::Applied => "[X]",
-                    MigrationStatus::Pending => "[ ]",
-                };
-                println!("{mark} {}", m.label());
+            for line in &lines {
+                println!("{}", line.display_text());
             }
-            if rows.is_empty() {
-                println!("No migrations found.");
-            }
+            println!();
+            println!("Applied: {total_applied}");
+            println!("Pending: {total_pending}");
         }
-        Ok(pending)
+        // dbmate v2.38: `--strict` fails when any applied migration file is missing.
+        // Print first (above), then error — same order as dbmate.
+        if strict {
+            migration::check_missing_applied_files(&files, &applied)?;
+        }
+        Ok(total_pending > 0)
     }
 
     pub async fn dump(&mut self) -> Result<()> {

@@ -5,7 +5,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 VERIFIED="$ROOT/verified/src"
 CACHE="${STAINLESS_HOME:-$ROOT/.stainless}"
-VERSION="${STAINLESS_VERSION:-0.10.3}"
+VERSION="${STAINLESS_VERSION:-0.10.4}"
 ZIP_NAME="stainless-dotty-standalone-${VERSION}-linux.zip"
 URL="https://github.com/epfl-lara/stainless/releases/download/v${VERSION}/${ZIP_NAME}"
 

@@ -1,7 +1,7 @@
 # tqlmate
 
 dbmate-style migration CLI for TypeDB 3.x. Behaviour tracks
-[dbmate v2.38.1](https://github.com/amacneil/dbmate/releases/tag/v2.38.1)
+[dbmate v2.38.2](https://github.com/amacneil/dbmate/releases/tag/v2.38.2)
 where it maps cleanly onto TypeDB (multi-section files; no `--migration-lock` /
 `--migration-application-name`).
 
@@ -129,6 +129,6 @@ used per section, and inventing one would be unsound. Do not pass a fake flag.
   → `CoreProperties` / `ExtrProperties`). They coexist until Verus fully covers
   extract fidelity + parse fixtures; see [`verification/README.md`](verification/README.md).
   Release binaries need neither verifier.
-- **Integration** (`tests/typedb_docker.rs` only, feature `typedb-docker`, on by default): TypeDB via [testcontainers](https://testcontainers.com/) (`typedb/typedb:3.14.2`). Requires Docker; fails loudly if unavailable (no silent skip).
+- **Integration** (`tests/typedb_docker.rs` only, feature `typedb-docker`, on by default): TypeDB via [testcontainers](https://testcontainers.com/) (`typedb/typedb:3.15.0`). Requires Docker; fails loudly if unavailable (no silent skip).
 - CI (`.github/workflows/ci.yml`, GitHub-hosted runners): jobs `unit` → `integration`, plus parallel `lint`, `verify (lean)`, `verify (verus)`, and `package` (`cargo publish --dry-run`).
 - Release: pushing a `v*` tag runs `.github/workflows/release.yml` — unit tests, then cross-platform binaries, then a GitHub Release with those archives attached and a `cargo publish` to crates.io (`CARGO_REGISTRY_TOKEN` secret). Releases are cut from GitHub only, never from a laptop.

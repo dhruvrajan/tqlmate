@@ -4,9 +4,10 @@ use std::io::Write;
 use std::path::Path;
 
 use tqlmate::{
-    check_strict_order, list_migration_files, new_migration_path, parse_migration,
-    parse_migration_body, parse_migration_sections, parse_version_name, slugify, status_rows,
-    Error, MigrationFile, MigrationStatus, Version,
+    applied_for_rollback, applied_without_files, check_missing_applied_files, check_strict_order,
+    latest_applied_has_file, list_migration_files, new_migration_path, parse_migration,
+    parse_migration_body, parse_migration_sections, parse_version_name, slugify, status_lines,
+    status_rows, Error, MigrationFile, MigrationStatus, StatusLine, Version,
 };
 
 fn mf(version: &str) -> MigrationFile {
@@ -203,6 +204,95 @@ fn status_and_strict_ordering() {
     )
     .is_ok());
     assert!(check_strict_order(&files, &[Version::new("1")]).is_ok());
+}
+
+#[test]
+fn status_shows_applied_without_file() {
+    // Mirror dbmate TestStatusMissingMigrationFile: files 001+020+030, applied 001+010+020.
+    let files = vec![mf("001"), mf("020"), mf("030")];
+    let applied = [
+        Version::new("001"),
+        Version::new("010"),
+        Version::new("020"),
+    ];
+    assert_eq!(
+        applied_without_files(&files, &applied),
+        vec![Version::new("010")]
+    );
+    let lines = status_lines(&files, &applied);
+    assert_eq!(
+        lines.iter().map(|l| l.display_text()).collect::<Vec<_>>(),
+        vec![
+            "[X] 001_001".to_string(),
+            "[?] 010 (file not found)".to_string(),
+            "[X] 020_020".to_string(),
+            "[ ] 030_030".to_string(),
+        ]
+    );
+    assert!(matches!(
+        check_missing_applied_files(&files, &applied),
+        Err(Error::MissingAppliedMigrationFile { kind: "migration", versions })
+            if versions == "010"
+    ));
+    assert!(
+        check_missing_applied_files(&files, &[Version::new("001"), Version::new("020")]).is_ok()
+    );
+}
+
+#[test]
+fn status_strict_multiple_missing_files() {
+    let files = vec![mf("1")];
+    let applied = [Version::new("1"), Version::new("2"), Version::new("3")];
+    assert!(matches!(
+        check_missing_applied_files(&files, &applied),
+        Err(Error::MissingAppliedMigrationFile { kind: "migrations", versions })
+            if versions == "2`, `3"
+    ));
+    // No file rows besides applied: still a MissingFile line.
+    assert!(matches!(
+        &status_lines(&[], &[Version::new("9")])[..],
+        [StatusLine::MissingFile { version }] if version.as_str() == "9"
+    ));
+}
+
+#[test]
+fn rollback_prefers_latest_file_when_tip_missing() {
+    // dbmate: without --strict, roll back 001 when 010 is applied but file-less.
+    let files = vec![mf("001")];
+    let applied = [Version::new("001"), Version::new("010")];
+    assert!(!latest_applied_has_file(&files, &applied));
+    assert_eq!(
+        applied_for_rollback(&files, &applied),
+        vec![Version::new("001")]
+    );
+    assert!(latest_applied_has_file(
+        &files,
+        &applied_for_rollback(&files, &applied)
+    ));
+}
+
+#[test]
+fn utf8_bom_ignored_on_parse() {
+    let body = "\u{feff}-- migrate:up\ndefine entity a;\n-- migrate:down\nundefine a;\n";
+    let sections = parse_migration_sections(body).unwrap();
+    assert_eq!(sections.len(), 1);
+    assert_eq!(sections[0].0, "define entity a;");
+}
+
+#[test]
+fn utf16_migration_file_rejected() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("1_bom.tql");
+    // UTF-16LE BOM + ASCII "-- migrate:up\n..."
+    let mut bytes = vec![0xff, 0xfe];
+    for b in b"-- migrate:up\n\n-- migrate:down\n" {
+        bytes.push(*b);
+        bytes.push(0);
+    }
+    std::fs::write(&path, bytes).unwrap();
+    let err = parse_migration(&path).unwrap_err();
+    let msg = format!("{err:#}");
+    assert!(msg.contains("UTF-16LE"), "expected UTF-16 hint, got {msg}");
 }
 
 #[test]

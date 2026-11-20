@@ -65,7 +65,7 @@ Specs read like ordinary Scala. `@induct` lemmas and `check(...)` are lighter th
 
 ## Verifier speed
 
-| | Verus (CI script) | Stainless 0.10.3 (local) |
+| | Verus (CI script) | Stainless 0.10.4 (local) |
 | --- | --- | --- |
 | Typical core check | tens of seconds (`--rlimit 80`) | **~7 s wall**, ~0.5 s solver (warm cache); 158 VCs |
 | Tooling install | download Verus binary | ~120 MB `stainless-dotty-standalone` zip |

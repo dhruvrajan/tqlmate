@@ -1,5 +1,5 @@
 lean=leanprover/lean4:v4.36.0
-aeneas=2e3d4488280bb8a95411db81019a7854a784861f
-charon=9e193f0317dacc822cc864c1798b117c70dcf7df
-verus=0.2026.11.02.8bf68ee
-verus_rust_toolchain=1.99.1-x86_64-unknown-linux-gnu
+aeneas=0c19cd5bff9298565362c6ca9c4f48a29033a0e9
+charon=5a2a17bd531850a9134adfa285eb50e156cd6e06
+verus=0.2026.11.22.1ce6a59
+verus_rust_toolchain=1.100.0-x86_64-unknown-linux-gnu

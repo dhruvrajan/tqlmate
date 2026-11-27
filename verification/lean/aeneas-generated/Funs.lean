@@ -145,7 +145,7 @@ def pure.Version.Insts.CoreFmtDebug.fmt
   := do
   let dyn :=
     Dyn.mk _ (core.fmt.DebugShared alloc.string.String.Insts.CoreFmtDebug) self
-  core.fmt.Formatter.debug_tuple_field1_finish f (toStr "Version") dyn
+  core.fmt.Formatter.debug_struct_field1_finish f (toStr "Version") dyn
 
 /-- Trait implementation: [tqlmate_extract::pure::{impl core::fmt::Debug for tqlmate_extract::pure::Version}]
     Source: 'src/../../../src/pure.rs', lines 25:9-25:14 -/
@@ -289,8 +289,7 @@ def pure.MigrationId.Insts.CoreFmtDebug.fmt
   let dyn1 :=
     Dyn.mk _ (core.fmt.DebugShared alloc.string.String.Insts.CoreFmtDebug)
       self.name
-  core.fmt.Formatter.debug_struct_field2_finish f (toStr "MigrationId") (toStr
-    "version") dyn (toStr "name") dyn1
+  core.fmt.Formatter.debug_struct_field2_finish f (toStr "MigrationId version name") dyn dyn1
 
 /-- Trait implementation: [tqlmate_extract::pure::{impl core::fmt::Debug for tqlmate_extract::pure::MigrationId}]
     Source: 'src/../../../src/pure.rs', lines 39:9-39:14 -/
@@ -540,8 +539,7 @@ def pure.StrictOrderError.Insts.CoreFmtDebug.fmt
   let __self_01 := Dyn.mk _ pure.Version.Insts.CoreFmtDebug __self_0
   let __self_11 :=
     Dyn.mk _ (core.fmt.DebugShared pure.Version.Insts.CoreFmtDebug) __self_1
-  core.fmt.Formatter.debug_struct_field2_finish f (toStr "OutOfOrder") (toStr
-    "pending") __self_01 (toStr "applied_up_to") __self_11
+  core.fmt.Formatter.debug_struct_field2_finish f (toStr "OutOfOrder pending applied_up_to") __self_01 __self_11
 
 /-- Trait implementation: [tqlmate_extract::pure::{impl core::fmt::Debug for tqlmate_extract::pure::StrictOrderError}]
     Source: 'src/../../../src/pure.rs', lines 70:9-70:14 -/
@@ -1943,9 +1941,7 @@ def pure.MigrationSpec.Insts.CoreFmtDebug.fmt
   let dyn3 :=
     Dyn.mk _ (core.fmt.DebugShared alloc.string.String.Insts.CoreFmtDebug)
       self.down
-  core.fmt.Formatter.debug_struct_field4_finish f (toStr "MigrationSpec")
-    (toStr "version") dyn (toStr "name") dyn1 (toStr "up") dyn2 (toStr "down")
-    dyn3
+  core.fmt.Formatter.debug_struct_field4_finish f (toStr "MigrationSpec version name up down") dyn dyn1 dyn2 dyn3
 
 /-- Trait implementation: [tqlmate_extract::pure::{impl core::fmt::Debug for tqlmate_extract::pure::MigrationSpec}]
     Source: 'src/../../../src/pure.rs', lines 537:9-537:14 -/
@@ -2053,15 +2049,13 @@ def pure.Op.Insts.CoreFmtDebug.fmt
     let __self_11 :=
       Dyn.mk _ (core.fmt.DebugShared alloc.string.String.Insts.CoreFmtDebug)
         __self_1
-    core.fmt.Formatter.debug_struct_field2_finish f (toStr "ApplyUp") (toStr
-      "version") __self_01 (toStr "up") __self_11
+    core.fmt.Formatter.debug_struct_field2_finish f (toStr "ApplyUp version up") __self_01 __self_11
   | pure.Op.ApplyDown __self_0 __self_1 =>
     let __self_01 := Dyn.mk _ pure.Version.Insts.CoreFmtDebug __self_0
     let __self_11 :=
       Dyn.mk _ (core.fmt.DebugShared alloc.string.String.Insts.CoreFmtDebug)
         __self_1
-    core.fmt.Formatter.debug_struct_field2_finish f (toStr "ApplyDown") (toStr
-      "version") __self_01 (toStr "down") __self_11
+    core.fmt.Formatter.debug_struct_field2_finish f (toStr "ApplyDown version down") __self_01 __self_11
 
 /-- Trait implementation: [tqlmate_extract::pure::{impl core::fmt::Debug for tqlmate_extract::pure::Op}]
     Source: 'src/../../../src/pure.rs', lines 556:9-556:14 -/
@@ -2162,8 +2156,7 @@ def pure.State.Insts.CoreFmtDebug.fmt
   let dyn :=
     Dyn.mk _ (core.fmt.DebugShared (core.fmt.DebugVec
       pure.Version.Insts.CoreFmtDebug)) self.applied
-  core.fmt.Formatter.debug_struct_field1_finish f (toStr "State") (toStr
-    "applied") dyn
+  core.fmt.Formatter.debug_struct_field1_finish f (toStr "State applied") dyn
 
 /-- Trait implementation: [tqlmate_extract::pure::{impl core::fmt::Debug for tqlmate_extract::pure::State}]
     Source: 'src/../../../src/pure.rs', lines 566:9-566:14 -/
@@ -2250,25 +2243,23 @@ def pure.PlanError.Insts.CoreFmtDebug.fmt
   | pure.PlanError.EmptyUp __self_0 =>
     let __self_01 :=
       Dyn.mk _ (core.fmt.DebugShared pure.Version.Insts.CoreFmtDebug) __self_0
-    core.fmt.Formatter.debug_tuple_field1_finish f (toStr "EmptyUp") __self_01
+    core.fmt.Formatter.debug_struct_field1_finish f (toStr "EmptyUp") __self_01
   | pure.PlanError.EmptyDown __self_0 __self_1 =>
     let __self_01 := Dyn.mk _ pure.Version.Insts.CoreFmtDebug __self_0
     let __self_11 :=
       Dyn.mk _ (core.fmt.DebugShared alloc.string.String.Insts.CoreFmtDebug)
         __self_1
-    core.fmt.Formatter.debug_struct_field2_finish f (toStr "EmptyDown") (toStr
-      "version") __self_01 (toStr "name") __self_11
+    core.fmt.Formatter.debug_struct_field2_finish f (toStr "EmptyDown version name") __self_01 __self_11
   | pure.PlanError.MissingFile __self_0 =>
     let __self_01 :=
       Dyn.mk _ (core.fmt.DebugShared pure.Version.Insts.CoreFmtDebug) __self_0
-    core.fmt.Formatter.debug_tuple_field1_finish f (toStr "MissingFile")
+    core.fmt.Formatter.debug_struct_field1_finish f (toStr "MissingFile")
       __self_01
   | pure.PlanError.StrictOrder __self_0 __self_1 =>
     let __self_01 := Dyn.mk _ pure.Version.Insts.CoreFmtDebug __self_0
     let __self_11 :=
       Dyn.mk _ (core.fmt.DebugShared pure.Version.Insts.CoreFmtDebug) __self_1
-    core.fmt.Formatter.debug_struct_field2_finish f (toStr "StrictOrder")
-      (toStr "pending") __self_01 (toStr "applied_up_to") __self_11
+    core.fmt.Formatter.debug_struct_field2_finish f (toStr "StrictOrder pending applied_up_to") __self_01 __self_11
 
 /-- Trait implementation: [tqlmate_extract::pure::{impl core::fmt::Debug for tqlmate_extract::pure::PlanError}]
     Source: 'src/../../../src/pure.rs', lines 584:9-584:14 -/
@@ -2395,11 +2386,11 @@ def pure.StepError.Insts.CoreFmtDebug.fmt
   | pure.StepError.EmptyUp __self_0 =>
     let __self_01 :=
       Dyn.mk _ (core.fmt.DebugShared pure.Version.Insts.CoreFmtDebug) __self_0
-    core.fmt.Formatter.debug_tuple_field1_finish f (toStr "EmptyUp") __self_01
+    core.fmt.Formatter.debug_struct_field1_finish f (toStr "EmptyUp") __self_01
   | pure.StepError.EmptyDown __self_0 =>
     let __self_01 :=
       Dyn.mk _ (core.fmt.DebugShared pure.Version.Insts.CoreFmtDebug) __self_0
-    core.fmt.Formatter.debug_tuple_field1_finish f (toStr "EmptyDown")
+    core.fmt.Formatter.debug_struct_field1_finish f (toStr "EmptyDown")
       __self_01
 
 /-- Trait implementation: [tqlmate_extract::pure::{impl core::fmt::Debug for tqlmate_extract::pure::StepError}]
